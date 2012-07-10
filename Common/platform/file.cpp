@@ -25,3 +25,20 @@ void        putshort(short int i, FILE * f)
     fwrite(&i, sizeof(short), 1, f);
 }
 #endif // !ALLEGRO_BIG_ENDIAN
+
+
+namespace AGS
+{
+namespace Common
+{
+namespace Platform
+{
+
+CFile *CFile::Open(const CString &file_name, const CString &opt)
+{
+    return new CFile();
+}
+    
+} // namespace Platform
+} // namespace Common
+} // namespace AGS

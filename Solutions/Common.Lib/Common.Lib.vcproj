@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)\..\Common&quot;;&quot;$(SolutionDir)\..\Common\libinclude&quot;;&quot;$(SolutionDir)\..\Windows\include&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\..&quot;;&quot;$(SolutionDir)\..\Common&quot;;&quot;$(SolutionDir)\..\Common\libinclude&quot;;&quot;$(SolutionDir)\..\Windows\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_WINDOWS;VS2005;_CRT_SECURE_NO_WARNINGS;ALLEGRO_STATICLINK;WINDOWS_VERSION;DISABLE_MPEG_AUDIO"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -107,7 +107,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)\..\Common&quot;;&quot;$(SolutionDir)\..\Common\libinclude&quot;;&quot;$(SolutionDir)\..\Windows\include&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\..&quot;;&quot;$(SolutionDir)\..\Common&quot;;&quot;$(SolutionDir)\..\Common\libinclude&quot;;&quot;$(SolutionDir)\..\Windows\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_WINDOWS;VS2005;_CRT_SECURE_NO_WARNINGS;ALLEGRO_STATICLINK;WINDOWS_VERSION;DISABLE_MPEG_AUDIO;ALLEGRO_NO_ASM"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -327,6 +327,22 @@
 				>
 				<File
 					RelativePath="..\..\Common\platform\file.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\platform\path.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="util"
+				>
+				<File
+					RelativePath="..\..\Common\util\keyvaluetree.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\util\string.cpp"
 					>
 				</File>
 			</Filter>
@@ -553,6 +569,58 @@
 				>
 				<File
 					RelativePath="..\..\Common\platform\file.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\platform\path.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="util"
+				>
+				<File
+					RelativePath="..\..\Common\util\array.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\util\filestream.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\util\fixedarray.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\util\keyvaluetree.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\util\memorystream.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\util\stream.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\util\string.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="core"
+				>
+				<File
+					RelativePath="..\..\Common\core\err.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\core\out.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\core\types.h"
 					>
 				</File>
 			</Filter>

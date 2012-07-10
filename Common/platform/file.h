@@ -24,4 +24,32 @@ void        putshort(short int, FILE *);
 
 #include "bigend.h"
 
+//=============================================================================
+//
+// [IKM] 2012-07-09: placeholder for the file class
+//
+//=============================================================================
+
+#include "Common/util/string.h"
+
+namespace AGS
+{
+namespace Common
+{
+namespace Platform
+{
+
+using AGS::Common::Util::CString;
+
+struct CFile
+{
+    FILE *f;
+
+    static CFile *Open(const CString &file_name, const CString &opt);
+};
+
+} // namespace Platform
+} // namespace Common
+} // namespace AGS
+
 #endif // __AGS_CN_PLATFORM__FILE_H

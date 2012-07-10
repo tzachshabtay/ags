@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)\..\Common&quot;;&quot;$(SolutionDir)\..\Common\libinclude&quot;;&quot;$(SolutionDir)\..\Engine&quot;;&quot;$(SolutionDir)\..\Plugins&quot;;&quot;$(SolutionDir)\..\Windows\include&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\..\&quot;;&quot;$(SolutionDir)\..\Common&quot;;&quot;$(SolutionDir)\..\Common\libinclude&quot;;&quot;$(SolutionDir)\..\Engine&quot;;&quot;$(SolutionDir)\..\Plugins&quot;;&quot;$(SolutionDir)\..\Windows\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;VS2005;_CRT_SECURE_NO_WARNINGS;ALLEGRO_STATICLINK;THIS_IS_THE_ENGINE;WINDOWS_VERSION;DISABLE_MPEG_AUDIO;BUILTIN_PLUGINS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -120,7 +120,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)\..\Common&quot;;&quot;$(SolutionDir)\..\Common\libinclude&quot;;&quot;$(SolutionDir)\..\Engine&quot;;&quot;$(SolutionDir)\..\Plugins&quot;;&quot;$(SolutionDir)\..\Windows\include&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)\..\&quot;;&quot;$(SolutionDir)\..\Common&quot;;&quot;$(SolutionDir)\..\Common\libinclude&quot;;&quot;$(SolutionDir)\..\Engine&quot;;&quot;$(SolutionDir)\..\Plugins&quot;;&quot;$(SolutionDir)\..\Windows\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;VS2005;_CRT_SECURE_NO_WARNINGS;ALLEGRO_STATICLINK;THIS_IS_THE_ENGINE;WINDOWS_VERSION;DISABLE_MPEG_AUDIO;ALLEGRO_NO_ASM;BUILTIN_PLUGINS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -1033,11 +1033,11 @@
 				Name="main"
 				>
 				<File
-					RelativePath="..\..\Engine\main\config.cpp"
+					RelativePath="..\..\Engine\main\_engine.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Engine\main\engine.cpp"
+					RelativePath="..\..\Engine\main\config.cpp"
 					>
 				</File>
 				<File
@@ -1086,6 +1086,30 @@
 				>
 				<File
 					RelativePath="..\..\Engine\plugin\agsplugin.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="core"
+				>
+				<File
+					RelativePath="..\..\Engine\core\engine.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\core\engine_setup.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="util"
+				>
+				<File
+					RelativePath="..\..\Engine\util\cmdargs.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\util\inifile.cpp"
 					>
 				</File>
 			</Filter>
@@ -1802,6 +1826,10 @@
 					RelativePath="..\..\Engine\platform\agsplatformdriver.h"
 					>
 				</File>
+				<File
+					RelativePath="..\..\Engine\platform\platform_api.h"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="media"
@@ -2000,6 +2028,30 @@
 				</File>
 				<File
 					RelativePath="..\..\Engine\gui\newcontrol.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="core"
+				>
+				<File
+					RelativePath="..\..\Engine\core\engine.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\core\engine_setup.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="util"
+				>
+				<File
+					RelativePath="..\..\Engine\util\cmdargs.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\util\inifile.h"
 					>
 				</File>
 			</Filter>
