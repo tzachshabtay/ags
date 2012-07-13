@@ -15,9 +15,8 @@ namespace Engine
 namespace Core
 {
 
-// Using-declarations
+using AGS::Common::Core::CErrorHandle;
 using AGS::Common::Util::CKeyValueTree;
-namespace Err = AGS::Common::Core::Err;
 
 CEngineSetup::CEngineSetup()
 {
@@ -30,12 +29,12 @@ void CEngineSetup::SetDefaults()
 
 HErr CEngineSetup::Read (CStream *in)
 {
-    return Err::Nil();
+    return CErrorHandle::Nil();
 }
 
 HErr CEngineSetup::Write(CStream *out)
 {
-    return Err::Nil();
+    return CErrorHandle::Nil();
 }
 
 HErr CEngineSetup::ReadCFG (CKeyValueTree *tree)
@@ -157,12 +156,12 @@ HErr CEngineSetup::ReadCFG (CKeyValueTree *tree)
         else
             play.playback = 0;
 
-    return Err::Nil();
+    return CErrorHandle::Nil();
 }
 
 HErr CEngineSetup::WriteCFG(CKeyValueTree *tree)
 {
-    return Err::Nil();
+    return CErrorHandle::Nil();
 }
 
 } // namespace Core

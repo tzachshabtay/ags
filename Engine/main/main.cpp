@@ -78,27 +78,34 @@ int psp_gfx_smooth_sprites = 1;
 char psp_translation[] = "default";
 #endif
 
-
+/*
 void main_pre_init()
 {
-    our_eip = -999;
-    cfopenpriority=2;
-    play.recording = 0;
-    play.playback = 0;
-    play.takeover_data = 0;
-}
+    //our_eip = -999;
+    //cfopenpriority=2;
 
+    //play.recording = 0;
+    //play.playback = 0;
+    //play.takeover_data = 0;
+}
+*/
+
+/*
 void main_create_platform_driver()
 {
     platform = AGSPlatformDriver::GetDriver();
 }
+*/
 
+/*
 void main_init()
 {
-    main_pre_init();
-    main_create_platform_driver();
+//  main_pre_init();
+//  main_create_platform_driver();
 }
+*/
 
+/*
 int main_preprocess_cmdline(int argc,char*argv[])
 {
 #ifdef WINDOWS_VERSION
@@ -113,10 +120,12 @@ int main_preprocess_cmdline(int argc,char*argv[])
 #endif
     return RETURN_CONTINUE;
 }
+*/
 
 extern char return_to_roomedit[30];
 extern char return_to_room[150];
 
+/*
 int main_process_cmdline(int argc,char*argv[])
 {
     for (int ee=1;ee<argc;ee++) {
@@ -195,6 +204,7 @@ int main_process_cmdline(int argc,char*argv[])
 
     return RETURN_CONTINUE;
 }
+*/
 
 void main_init_crt_report()
 {
@@ -223,6 +233,7 @@ void main_init_crt_report()
 #endif
 }
 
+/*
 void change_to_directory_of_file(LPCWSTR fileName)
 {
     WCHAR wcbuffer[MAX_PATH];
@@ -241,7 +252,9 @@ void change_to_directory_of_file(LPCWSTR fileName)
     }
 #endif
 }
+*/
 
+/*
 void main_set_gamedir(int argc,char*argv[])
 {
     if ((loadSaveGameOnStartup != NULL) && (argv[0] != NULL))
@@ -266,6 +279,7 @@ void main_set_gamedir(int argc,char*argv[])
     getcwd(dataDirectory, 512);
 #endif
 }
+*/
 
 #if defined(WINDOWS_VERSION)
 #include <new.h>
@@ -279,15 +293,55 @@ int malloc_fail_handler(size_t amountwanted) {
 }
 #endif
 
-int main(int argc,char*argv[]) { 
-    
-    int res;
-    main_init();
-    
-    res = main_preprocess_cmdline(argc, argv);
-    if (res != RETURN_CONTINUE) {
-        return res;
+#include "Common/core/err.h"
+#include "Common/core/out.h"
+#include "Engine/core/agsengine.h"
+#include "Engine/core/engine_setup.h"
+#include "Engine/game/agsgame.h"
+#include "Engine/util/cmdargs.h"
+
+using AGS::Common::Core::HErr;
+using AGS::Engine::Core::CAGSEngine;
+using AGS::Engine::Util::CCmdArgs;
+namespace Out = AGS::Common::Core::Out;
+
+int main(int argc,char*argv[])
+{    
+    HErr err;
+
+    // Create the Platform Driver
+    // TODO: use global var for now, but change to local var later
+    /*AGSPlatformDriver **/platform = AGSPlatformDriver::GetDriver();
+    if (!platform)
+    {
+        return 0; // TODO proper error code here
     }
+
+    // Create the Engine
+    err = CAGSEngine::CreateInstance();
+    if (!err->IsNil())
+    {
+        return 0; // TODO proper error code here
+    }
+
+    CAGSEngine *the_engine = CAGSEngine::GetInstance();
+    the_engine->SetEIP(-999);
+    cfopenpriority=2; // Clib32
+    the_engine->GetGame()->Initialize(); // perhaps move to Engine::StartUp
+
+    //main_init();
+
+    CCmdArgs cmd_args;
+    err = cmd_args.ParseCmdLine(argc, argv);
+    if (!err->IsNil())
+    {
+        return 9; // TODO proper error code here
+    }
+    
+    //res = main_preprocess_cmdline(argc, argv);
+    //if (res != RETURN_CONTINUE) {
+    //    return res;
+    //}
 
     // [IKM] For some bizzare reason this function is a part of routefnd module;
     // I cannot just move it here, because it references certain variables from
@@ -297,41 +351,59 @@ int main(int argc,char*argv[]) {
     if ((argc>1) && (argv[1][1]=='?'))
         return 0;
 
-    write_log_debug("***** ENGINE STARTUP");
+    Out::Notify("***** ENGINE STARTUP");
 
 #if defined(WINDOWS_VERSION)
     _set_new_handler(malloc_fail_handler);
     _set_new_mode(1);
     printfworkingspace=(char*)malloc(7000);
 #endif
-    debug_flags=0;
 
-    res = main_process_cmdline(argc, argv);
-    if (res != RETURN_CONTINUE) {
-        return res;
+
+
+    err = the_engine->Initialize(cmd_args);
+    if (!err->IsNil())
+    {
+        return 0; // TODO proper error code here
     }
 
-    main_init_crt_report();
 
-    main_set_gamedir(argc, argv);    
+
+    //debug_flags=0;
+
+    //res = main_process_cmdline(argc, argv);
+    //if (res != RETURN_CONTINUE) {
+    //    return res;
+    //}
+
+    // not used anyway
+    //main_init_crt_report();
+
+    //main_set_gamedir(argc, argv);    
 
     // Update shell associations and exit
-    if (debug_flags & DBG_REGONLY)
+    // [IKM] Will leave as this for now
+    if (/*debug_flags*/
+        the_engine->GetSetup()->DebugFlags & DBG_REGONLY)
+    {
         exit(0);
+    }
 
 #ifndef USE_CUSTOM_EXCEPTION_HANDLER
-    usetup.disable_exception_handling = 1;
+    the_engine->GetSetup()->DisableExceptionHandling = 1;
 #endif
 
-    if (usetup.disable_exception_handling)
+    if (the_engine->GetSetup()->DisableExceptionHandling)
     {
-        initialize_engine(argc, argv);
+        err = the_engine->StartUp();
         platform->PostAllegroExit();
     }
     else
     {
-        return initialize_engine_with_exception_handling(argc, argv);
+        err = the_engine->StartUpWithExceptionHandling();
     }
+
+    return 0; // TODO proper error code here
 }
 
 #if defined(WINDOWS_VERSION) || defined(LINUX_VERSION) || defined(MAC_VERSION)

@@ -9,7 +9,7 @@ namespace Engine
 namespace Util
 {
 
-using AGS::Common::Core::CErrorHandle;
+namespace Err = AGS::Common::Core::Err;
 
 CINIFile::CINIFile()
 {
@@ -21,12 +21,12 @@ CINIFile::~CINIFile()
 
 HErr CINIFile::ReadAsTree   (CStream *in)
 {
-    return CErrorHandle::Nil();
+    return Err::Nil();
 }
 
 HErr CINIFile::WriteAsTree  (CStream *out) const
 {
-    return CErrorHandle::Nil();
+    return Err::Nil();
 }
 
 CINIFile *CINIFile::Open(const CString &file_name, const CString &mode)

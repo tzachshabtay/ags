@@ -13,6 +13,7 @@
 
 // Undef conflicting names
 #undef GetCurrentDirectory
+#undef SetCurrentDirectory
 
 #else
 

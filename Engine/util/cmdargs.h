@@ -7,6 +7,7 @@
 #ifndef __AGS_EE_UTILS__CMDARGS_H
 #define __AGS_EE_UTILS__CMDARGS_H
 
+#include "Common/core/err.h"
 #include "Common/util/string.h"
 
 namespace AGS
@@ -16,6 +17,7 @@ namespace Engine
 namespace Util
 {
 
+using AGS::Common::Core::HErr;
 using AGS::Common::Util::CString;
 
 //
@@ -30,7 +32,9 @@ class CCmdArgs
 {
 public:
     CCmdArgs();
-    CCmdArgs(int argc, const char * const argv[]);
+
+    HErr    ParseCmdLine(int argc, const char * const argv[]);
+    void    Clear();
 
     int     GetCount() const;
 
@@ -47,6 +51,8 @@ public:
 
     CString GetArgValue(const CString &exact_name) const;
     CString GetArgValue(const CString &short_name, const CString &long_name) const;
+
+    CString operator[](int index) const;
 };
 
 } // namespace Util

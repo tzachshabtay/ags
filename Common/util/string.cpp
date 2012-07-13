@@ -14,7 +14,7 @@ void CString::Append(const CString &s)
     // o_0
 }
 
-void CString::AppendSz(const char *sz)
+void CString::AppendCStr(const char *sz)
 {
     // o_0
 }
@@ -27,6 +27,21 @@ bool CString::IsEmpty() const
 int CString::GetLength() const
 {
     return strlen(s);
+}
+
+int CString::Compare(const CString &other) const
+{
+    return 0;
+}
+
+void CString::Format(const CString &format, ...)
+{
+    // o_0
+}
+
+int CString::ToInt() const
+{
+    return 0;
 }
 
 } // namespace Util

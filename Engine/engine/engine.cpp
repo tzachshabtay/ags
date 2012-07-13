@@ -4,8 +4,8 @@
 #include "Common/util/string.h"
 #include "Common/platform/file.h"
 #include "Common/platform/path.h"
-#include "Engine/core/engine.h"
-#include "Engine/core/engine_setup.h"
+#include "Engine/engine/engine.h"
+#include "Engine/engine/engine_setup.h"
 #include "Engine/util/inifile.h"
 
 // FIXME! this should not be used like that

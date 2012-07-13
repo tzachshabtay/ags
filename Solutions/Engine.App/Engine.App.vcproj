@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="Engine.App"
 	ProjectGUID="{49A909AF-49F3-451D-B6DF-839159E54A01}"
 	RootNamespace="EngineApp"
@@ -1093,7 +1093,7 @@
 				Name="core"
 				>
 				<File
-					RelativePath="..\..\Engine\core\engine.cpp"
+					RelativePath="..\..\Engine\core\agsengine.cpp"
 					>
 				</File>
 				<File
@@ -1110,6 +1110,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Engine\util\inifile.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="game"
+				>
+				<File
+					RelativePath="..\..\Engine\game\agsgame.cpp"
 					>
 				</File>
 			</Filter>
@@ -1826,10 +1834,6 @@
 					RelativePath="..\..\Engine\platform\agsplatformdriver.h"
 					>
 				</File>
-				<File
-					RelativePath="..\..\Engine\platform\platform_api.h"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="media"
@@ -2035,7 +2039,7 @@
 				Name="core"
 				>
 				<File
-					RelativePath="..\..\Engine\core\engine.h"
+					RelativePath="..\..\Engine\core\agsengine.h"
 					>
 				</File>
 				<File
@@ -2052,6 +2056,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Engine\util\inifile.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="game"
+				>
+				<File
+					RelativePath="..\..\Engine\game\agsgame.h"
 					>
 				</File>
 			</Filter>

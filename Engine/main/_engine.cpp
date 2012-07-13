@@ -66,8 +66,6 @@ WCHAR directoryPathBuffer[MAX_PATH];
 
 int errcod;
 
-HWND allegro_wnd;
-
 
 const char *get_engine_version()
 {

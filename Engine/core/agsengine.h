@@ -6,12 +6,19 @@
 // [IKM] 2012-07-09: draft version
 //
 //=============================================================================
-#ifndef __AGS_EE_CORE__ENGINE_H
-#define __AGS_EE_CORE__ENGINE_H
+#ifndef __AGS_EE_CORE__AGSENGINE_H
+#define __AGS_EE_CORE__AGSENGINE_H
 
 #include "Common/core/err.h"
-#include "Engine/platform/platform_api.h"
+#include "Common/platform/platform_api.h"
 #include "Engine/util/cmdargs.h"
+
+#if defined(WINDOWS_VERSION) && !defined(_DEBUG)
+#define USE_CUSTOM_EXCEPTION_HANDLER
+#endif
+
+// Forward declaration
+struct AGSPlatformDriver;
 
 namespace AGS
 {
@@ -19,10 +26,16 @@ namespace Engine
 {
 
 // Forward declarations
+namespace Game
+{
+class CAGSGame;
+}
 namespace Util
 {
 class CCmdArgs;
 }
+
+//-----------------------------------------------------------------------------
 
 namespace Core
 {
@@ -33,46 +46,61 @@ struct CEngineSetup;
 // Using-declarations
 using AGS::Common::Core::HErr;
 using AGS::Common::Util::CString;
+using AGS::Engine::Game::CAGSGame;
 using AGS::Engine::Util::CCmdArgs;
+
+//-----------------------------------------------------------------------------
 
 class CAGSEngine
 {
     friend void atexit_handler();
 public:
+    ~CAGSEngine();
+
     // Explicitly constructs the instance of AGS Engine; issues a warning if called more than once
-    static HErr         ConstructInstance();
+    static HErr         CreateInstance();
     // Gets the instance of AGS Engine; does not implicitly constructs one
     static CAGSEngine   *GetInstance();
 
     CString         GetEngineVersion() const;
-    void            SetEIP(int32 eip);
-    int32           GetEIP() const;
-    CEngineSetup   *GetSetup() const;
+    void            SetEIP(int32_t eip);
+    int32_t         GetEIP() const;
 
-    //-------------------------------------------------------------------------
-    // A copy of original engine init functions
-    //
-    
-    HErr        Initialize(const CCmdArgs &cmdargs);
-    HErr        InitializeWithExceptionHandling(const CCmdArgs &cmdargs);
-    //-------------------------------------------------------------------------
+    CEngineSetup   *GetSetup() const;
+    CAGSGame       *GetGame() const;
+
+    HErr            Initialize(const CCmdArgs &cmdargs);
+    HErr            StartUp();
+    HErr            StartUpWithExceptionHandling();
 
 protected:
 
-    HErr ReadConfigFile(const CString &file_name);
+    HErr ProcessCmdLine(const CCmdArgs &cmdargs);
+    HErr ReadConfigFile();
+    HErr InitAllegro();
+    HErr InitWindow();
+    bool SetGameDataFileName();
+    HErr InitGameDataFile();
+    int  InitGameDataExternal(); // returns clib's errcode
+    HErr InitGameDataInternal();
+    
+    HErr Run();
+    HErr RunSetup();
+
+    static void AllegroExitHandler();
+    static void WindowCloseHandler();
 
     //-------------------------------------------------------------------------
     // A copy of original engine init functions
     //
+    //void change_to_directory_of_file(LPCWSTR fileName);
     int engine_init_allegro();
     void winclosehook();
     void engine_setup_window();
     int engine_check_run_setup(int argc,char*argv[]);
     void engine_force_window();
-    int engine_init_game_data_external(int argc,char*argv[]);
-    int engine_init_game_data_internal(int argc,char*argv[]);
-    void initialise_game_file_name();
-    int engine_init_game_data(int argc,char*argv[]);
+    
+    
     void engine_init_fonts();
     int engine_init_mouse();
     int engine_check_memory();
@@ -83,7 +111,6 @@ protected:
     void engine_init_timer();
     void engine_init_sound();
     void engine_init_debug();
-    void atexit_handler();
     void engine_init_exit_handler();
     void engine_init_rand();
     void engine_init_pathfinder();
@@ -121,21 +148,41 @@ private:
     CAGSEngine();
 
     // Platform-specific override
-    virtual void        OverrideSetup();
+    void    OverrideSetup();
 
     // The only instance of the AGS Engine
     static CAGSEngine   *_theEngine;
+    AGSPlatformDriver   *_platform;
     // EIP = Extended Instruction Pointer; here it is simply an integer, which
     // stores numerical id of last "checkpoint" in program execution
-    int32               _eip;
+    int32_t             _eip;
+    int32_t             _eipGuiNum;
+    int32_t             _eipGuiObj;
+    CString             _appExeName;
+    CString             _appDirectory;
+    CString             _gameDataFileName;
+    CString             _gameDataDirectory;
     CEngineSetup        *_theSetup;
     CString             _configFileDefName;
     CString             _configFileName;
     bool                _ignoreConfigFile;
+    bool                _mustChangeToGameDataDirectory;
+
+    bool                _mustRunSetup;
+
+    HWND                _hAllegroWnd;
+    int                 _AllegroErrNo;
+
+    CAGSGame            *_theGame;
+    bool                _properExit;
+    bool                _wantExit;
+    bool                _abortEngine;
+    bool                _checkDynamicSpritesAtExit;
+
 };
 
 } // namespace Core
 } // namespace Engine
 } // namespace AGS
 
-#endif // __AGS_EE_CORE__ENGINE_H
+#endif // __AGS_EE_CORE__AGSENGINE_H

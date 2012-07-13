@@ -27,8 +27,6 @@ class CKeyValueTree;
 
 namespace Engine
 {
-namespace Core
-{
 
 // Using-declarations
 using AGS::Common::Core::HErr;
@@ -41,21 +39,21 @@ using AGS::Common::Util::CStream;
 struct CEngineSetup
 {
 public:
-    int32_t Digicard;
-    int32_t Midicard;
-    int32_t ModPlayer;
-    int32_t TextHeight;
-    int32_t MP3Player;
-    int32_t WantLetterbox;
-    int32_t Windowed;
-    int32_t BaseWidth;
-    int32_t BaseHeight;
-    int16_t Refresh;
-    int8_t  NoSpeechPack;
-    int8_t  EnableAntialiasing;
-    int8_t  ForceHicolorMode;
-    int8_t  DisableExceptionHandling;
-    int8_t  EnableSideBorders;
+    int32 Digicard;
+    int32 Midicard;
+    int32 ModPlayer;
+    int32 TextHeight;
+    int32 MP3Player;
+    int32 WantLetterbox;
+    int32 Windowed;
+    int32 BaseWidth;
+    int32 BaseHeight;
+    int16 Refresh;
+    int8  NoSpeechPack;
+    int8  EnableAntialiasing;
+    int8  ForceHicolorMode;
+    int8  DisableExceptionHandling;
+    int8  EnableSideBorders;
 
     CString DataFilesDir;
     CString MainDataFilename;
@@ -63,9 +61,8 @@ public:
     CString GfxFilterID;
     CString GfxDriverID;
 
-    int32_t ForceLetterbox;
+    int32 ForceLetterbox;
     CString ReplayFile;
-    int     DebugFlags;
 
     CEngineSetup();
     void SetDefaults();
@@ -77,7 +74,6 @@ public:
     HErr WriteCFG(Common::Util::CKeyValueTree *tree);
 };
 
-} // namespace Core
 } // namespace Engine
 } // namespace AGS
 

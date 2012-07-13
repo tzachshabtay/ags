@@ -10,15 +10,16 @@ namespace Util
 
 // Using-declarations
 using AGS::Common::Core::CErrorHandle;
+namespace Err = AGS::Common::Core::Err;
 
 HErr CKeyValueTree::ReadAsBinary (CStream *in)
 {
-    return CErrorHandle::Nil();
+    return Err::Nil();
 }
 
 HErr CKeyValueTree::WriteAsBinary(CStream *out) const
 {
-    return CErrorHandle::Nil();
+    return Err::Nil();
 }
 
 CKeyValueTree *CKeyValueTree::CreateTree(const CString &name)
@@ -31,17 +32,17 @@ CKeyValueTree *CKeyValueTree::FindTree(const CString &name) const
     return NULL;
 }
 
-bool CKeyValueTree::TryReadInt8(const CString &name, int8 *value) const
+bool CKeyValueTree::TryReadInt8(const CString &name, int8_t *value) const
 {
     return false;
 }
 
-bool CKeyValueTree::TryReadInt16(const CString &name, int16 *value) const
+bool CKeyValueTree::TryReadInt16(const CString &name, int16_t *value) const
 {
     return false;
 }
 
-bool CKeyValueTree::TryReadInt32(const CString &name, int32 *value) const
+bool CKeyValueTree::TryReadInt32(const CString &name, int32_t *value) const
 {
     return false;
 }
@@ -51,17 +52,17 @@ bool CKeyValueTree::TryReadString(const CString &name, const CString *value) con
     return false;
 }
 
-int8 CKeyValueTree::ReadInt8(const CString &name, int8 def_value) const
+int8_t CKeyValueTree::ReadInt8(const CString &name, int8_t def_value) const
 {
     return 0;
 }
 
-int16 CKeyValueTree::ReadInt16(const CString &name, int16 def_value) const
+int16_t CKeyValueTree::ReadInt16(const CString &name, int16_t def_value) const
 {
     return 0;
 }
 
-int32 CKeyValueTree::ReadInt32(const CString &name, int32 def_value) const
+int32_t CKeyValueTree::ReadInt32(const CString &name, int32_t def_value) const
 {
     return 0;
 }
@@ -71,15 +72,15 @@ CString CKeyValueTree::ReadString(const CString &name, const CString &def_value)
     return "";
 }
 
-void CKeyValueTree::WriteInt8(const CString &name, int8 value)
+void CKeyValueTree::WriteInt8(const CString &name, int8_t value)
 {
 }
 
-void CKeyValueTree::WriteInt16(const CString &name, int16 value)
+void CKeyValueTree::WriteInt16(const CString &name, int16_t value)
 {
 }
 
-void CKeyValueTree::WriteInt32 (const CString &name, int32 value)
+void CKeyValueTree::WriteInt32 (const CString &name, int32_t value)
 {
 }
 

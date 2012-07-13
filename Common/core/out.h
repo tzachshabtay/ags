@@ -22,20 +22,21 @@ namespace Out
 {
 
 // Convenience functions, with regard to verbosity settings
-void Debug          (const CString &msg, ...){};
-void Debug          (const CString &fnname, const CString &msg, ...){};
-void Notify         (const CString &msg, ...){};
-void Notify         (const CString &fnname, const CString &msg, ...){};
-void Warn           (const CString &msg, ...){};
-void Warn           (const CString &fnname, const CString &msg, ...){};
-void HandledErr     (const CString &msg, ...){};
-void HandledErr     (const CString &fnname, const CString &msg, ...){};
-void UnhandledErr   (const CString &msg, ...){};
-void UnhandledErr   (const CString &fnname, const CString &msg, ...){};
-void FatalErr       (const CString &msg, ...){};
-void FatalErr       (const CString &fnname, const CString &msg, ...){};
-void FnIn           (const CString &fnname){};
-void FnOut          (const CString &fnname){};
+// Temporarily inline
+inline void Debug          (const CString &msg, ...){};
+inline void Debug          (const CString &fnname, const CString &msg, ...){};
+inline void Notify         (const CString &msg, ...){};
+inline void Notify         (const CString &fnname, const CString &msg, ...){};
+inline void Warn           (const CString &msg, ...){};
+inline void Warn           (const CString &fnname, const CString &msg, ...){};
+inline void HandledErr     (const CString &msg, ...){};
+inline void HandledErr     (const CString &fnname, const CString &msg, ...){};
+inline void UnhandledErr   (const CString &msg, ...){};
+inline void UnhandledErr   (const CString &fnname, const CString &msg, ...){};
+inline void FatalErr       (const CString &msg, ...){};
+inline void FatalErr       (const CString &fnname, const CString &msg, ...){};
+inline void FnIn           (const CString &fnname){};
+inline void FnOut          (const CString &fnname){};
 
 } // namespace Out
 

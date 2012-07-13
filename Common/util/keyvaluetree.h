@@ -45,21 +45,21 @@ public:
     virtual CKeyValueTree *FindTree  (const CString &name) const;
 
     // Reads value only if exists
-    virtual bool    TryReadInt8  (const CString &name, int8  *value) const;
-    virtual bool    TryReadInt16 (const CString &name, int16 *value) const;
-    virtual bool    TryReadInt32 (const CString &name, int32 *value) const;
+    virtual bool    TryReadInt8  (const CString &name, int8_t  *value) const;
+    virtual bool    TryReadInt16 (const CString &name, int16_t *value) const;
+    virtual bool    TryReadInt32 (const CString &name, int32_t *value) const;
     virtual bool    TryReadString(const CString &name, const CString *value) const;
 
     // Reads value and returns default if it does not exists
-    virtual int8    ReadInt8  (const CString &name, int8  def_value = 0) const;
-    virtual int16   ReadInt16 (const CString &name, int16 def_value = 0) const;
-    virtual int32   ReadInt32 (const CString &name, int32 def_value = 0) const;
+    virtual int8_t  ReadInt8  (const CString &name, int8_t  def_value = 0) const;
+    virtual int16_t ReadInt16 (const CString &name, int16_t def_value = 0) const;
+    virtual int32_t ReadInt32 (const CString &name, int32_t def_value = 0) const;
     virtual CString ReadString(const CString &name, const CString &def_value = "") const;
 
     // Writes value (implicitly creates node if it does not exist)
-    virtual void    WriteInt8  (const CString &name, int8  value);
-    virtual void    WriteInt16 (const CString &name, int16 value);
-    virtual void    WriteInt32 (const CString &name, int32 value);
+    virtual void    WriteInt8  (const CString &name, int8_t  value);
+    virtual void    WriteInt16 (const CString &name, int16_t value);
+    virtual void    WriteInt32 (const CString &name, int32_t value);
     virtual void    WriteString(const CString &name, const CString &value);
 };
 
