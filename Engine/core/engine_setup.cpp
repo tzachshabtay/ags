@@ -1,8 +1,8 @@
 
 #include "Common/core/err.h"
 #include "Engine/core/engine_setup.h"
-#include "wgt2allg.h"
-#include "sprcache.h"
+#include "util/wgt2allg.h"
+#include "ac/spritecache.h"
 #include "ac/gamestate.h"
 
 extern SpriteCache spriteset;

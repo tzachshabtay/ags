@@ -1,16 +1,16 @@
 
-#include "wgt2allg.h"
-#include "ac/ac_common.h"
-#include "ac/ac_object.h"
+#include "util/wgt2allg.h"
+#include "ac/common.h"
+#include "ac/object.h"
 #include "ac/roomstruct.h"
 #include "ac/character.h"
+#include "ac/draw.h"
 #include "ac/gamestate.h"
 #include "ac/gamesetupstruct.h"
 #include "ac/object.h"
 #include "ac/roomobject.h"
 #include "ac/roomstatus.h"
 #include "ac/walkablearea.h"
-#include "acmain/ac_draw.h"
 
 extern roomstruct thisroom;
 extern GameState play;

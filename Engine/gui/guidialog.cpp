@@ -1,13 +1,12 @@
 
 #include "gui/guidialog.h"
-#include "wgt2allg.h"
-#include "ali3d.h"
-#include "ac/ac_common.h"
+#include "util/wgt2allg.h"
+#include "gfx/ali3d.h"
+#include "ac/common.h"
+#include "ac/draw.h"
 #include "ac/game.h"
 #include "ac/gamesetup.h"
 #include "ac/gamesetupstruct.h"
-#include "acmain/ac_draw.h"
-#include "acmain/ac_message.h"
 #include "gui/cscidialog.h"
 
 extern IGraphicsDriver *gfxDriver;

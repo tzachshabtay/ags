@@ -7,7 +7,7 @@
 #ifndef __AGS_EE_PLATFORM__PLATFORMAPI_H
 #define __AGS_EE_PLATFORM__PLATFORMAPI_H
 
-#include "wgt2allg.h" // FIXME! -- temp
+#include "util/wgt2allg.h" // FIXME! -- temp
 
 #if defined (WINDOWS_VERSION)
 

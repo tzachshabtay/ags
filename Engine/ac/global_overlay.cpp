@@ -1,15 +1,16 @@
 
 #include "ac/global_overlay.h"
-#include "wgt2allg.h"
-#include "ac/ac_common.h"
+#include "util/wgt2allg.h"
+#include "ac/common.h"
+#include "ac/display.h"
+#include "ac/draw.h"
 #include "ac/gamesetupstruct.h"
+#include "ac/global_translation.h"
 #include "ac/overlay.h"
+#include "ac/runtime_defines.h"
 #include "ac/screenoverlay.h"
-#include "acmain/ac_draw.h"
-#include "acmain/ac_message.h"
-#include "acmain/ac_strings.h"
-#include "acmain/ac_translation.h"
-#include "sprcache.h"
+#include "ac/string.h"
+#include "ac/spritecache.h"
 
 
 extern int spritewidth[MAX_SPRITES],spriteheight[MAX_SPRITES];
@@ -17,6 +18,7 @@ extern int final_scrn_wid,final_scrn_hit,final_col_dep;
 extern int scrnwid,scrnhit;
 extern SpriteCache spriteset;
 extern GameSetupStruct game;
+extern block virtual_screen;
 
 extern ScreenOverlay screenover[MAX_SCREEN_OVERLAYS];
 extern int crovr_id;  // whether using SetTextOverlay or CreateTextOvelay

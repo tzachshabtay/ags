@@ -1,23 +1,24 @@
 
 #include <math.h>
-#include "wgt2allg.h"
+#include "util/wgt2allg.h"
 #include "ac/dynamicsprite.h"
-#include "ac/ac_common.h"
-#include "ac/roomstruct.h"
-#include "acmain/ac_maindefines.h"
+#include "ac/common.h"
 #include "ac/charactercache.h"
+#include "ac/draw.h"
 #include "ac/gamesetupstruct.h"
 #include "ac/global_dynamicsprite.h"
 #include "ac/global_game.h"
 #include "ac/file.h"
+#include "ac/math.h"    // M_PI
 #include "ac/objectcache.h"
 #include "ac/roomobject.h"
 #include "ac/roomstatus.h"
-#include "acmain/ac_draw.h"
+#include "ac/roomstruct.h"
 #include "debug/debug.h"
 #include "gui/dynamicarray.h"
 #include "gui/guibutton.h"
-#include "sprcache.h"
+#include "ac/spritecache.h"
+#include "platform/override_defines.h"
 
 extern GameSetupStruct game;
 extern SpriteCache spriteset;
@@ -32,6 +33,9 @@ extern ObjectCache objcache[MAX_INIT_SPR];
 
 extern int final_scrn_wid,final_scrn_hit,final_col_dep;
 extern int scrnwid,scrnhit;
+extern color palette[256];
+extern block virtual_screen;
+extern IGraphicsDriver *gfxDriver;
 
 char check_dynamic_sprites_at_exit = 1;
 

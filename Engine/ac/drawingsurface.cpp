@@ -1,21 +1,21 @@
 
-#include "wgt2allg.h"
+#include "util/wgt2allg.h"
+#include "ac/draw.h"
 #include "ac/drawingsurface.h"
-#include "ac/ac_common.h"
+#include "ac/common.h"
 #include "ac/charactercache.h"
+#include "ac/display.h"
 #include "ac/game.h"
 #include "ac/gamesetupstruct.h"
 #include "ac/gamestate.h"
+#include "ac/global_translation.h"
 #include "ac/objectcache.h"
 #include "ac/roomobject.h"
 #include "ac/roomstatus.h"
-#include "acmain/ac_draw.h"
-#include "acmain/ac_message.h"
-#include "acmain/ac_strings.h"
-#include "acmain/ac_translation.h"
+#include "ac/string.h"
 #include "debug/debug.h"
 #include "gui/guimain.h"
-#include "sprcache.h"
+#include "ac/spritecache.h"
 
 extern GameSetupStruct game;
 extern GameState play;
@@ -26,8 +26,10 @@ extern ObjectCache objcache[MAX_INIT_SPR];
 extern GUIMain*guis;
 extern SpriteCache spriteset;
 extern int spritewidth[MAX_SPRITES],spriteheight[MAX_SPRITES];
+extern block dynamicallyCreatedSurfaces[MAX_DYNAMIC_SURFACES];
 
 extern int current_screen_resolution_multiplier;
+extern int trans_mode;
 
 // ** SCRIPT DRAWINGSURFACE OBJECT
 

@@ -1,25 +1,24 @@
 
-#include "wgt2allg.h"
+#include "util/wgt2allg.h"
 #include "ac/object.h"
-#include "ali3d.h"
-#include "ac/ac_common.h"
+#include "gfx/ali3d.h"
+#include "ac/common.h"
 #include "ac/gamesetupstruct.h"
-#include "ac/ac_object.h"
-#include "ac/roomstruct.h"
+#include "ac/draw.h"
 #include "ac/character.h"
 #include "ac/global_object.h"
+#include "ac/global_translation.h"
 #include "ac/objectcache.h"
 #include "ac/path.h"
+#include "ac/properties.h"
 #include "ac/roomstatus.h"
-#include "ac/rundefines.h"
+#include "ac/roomstruct.h"
+#include "ac/runtime_defines.h"
+#include "ac/string.h"
 #include "ac/walkablearea.h"
-#include "acmain/ac_customproperties.h"
-#include "acmain/ac_draw.h"
-#include "acmain/ac_string.h"
-#include "acmain/ac_translation.h"
 #include "debug/debug.h"
 #include "main/game_run.h"
-#include "routefnd.h"
+#include "ac/route_finder.h"
 
 
 extern ScriptObject scrObj[MAX_INIT_SPR];
@@ -32,6 +31,8 @@ extern int final_scrn_wid,final_scrn_hit,final_col_dep;
 extern MoveList *mls;
 extern GameSetupStruct game;
 extern block walkable_areas_temp;
+extern IGraphicsDriver *gfxDriver;
+extern int offsetx,offsety;
 
 
 int Object_IsCollidingWithObject(ScriptObject *objj, ScriptObject *obj2) {

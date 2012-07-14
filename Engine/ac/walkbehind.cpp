@@ -1,12 +1,11 @@
 
 #include "ac/walkbehind.h"
-#include "wgt2allg.h"
-#include "ali3d.h"
-#include "ac/ac_common.h"
-#include "ac/ac_defines.h"
+#include "util/wgt2allg.h"
+#include "gfx/ali3d.h"
+#include "ac/common.h"
+#include "ac/common_defines.h"
 #include "ac/roomstruct.h"
 #include "ac/gamestate.h"
-#include "acmain/ac_draw.h"
 #include "media/audio/audio.h"
 
 extern roomstruct thisroom;

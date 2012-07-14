@@ -1,6 +1,6 @@
 
 #include "ac/audioclip.h"
-#include "wgt2allg.h"
+#include "util/wgt2allg.h"
 #include "ac/audiochannel.h"
 #include "ac/gamesetupstruct.h"
 #include "media/audio/audio.h"
@@ -51,6 +51,3 @@ ScriptAudioChannel* AudioClip_PlayQueued(ScriptAudioClip *clip, int priority, in
 {
     return play_audio_clip(clip, priority, repeat, 0, true);
 }
-
-#include "acmain/ac_maindefines.h"
-

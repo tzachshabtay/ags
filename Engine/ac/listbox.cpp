@@ -1,14 +1,13 @@
 
 #include "ac/listbox.h"
-#include "wgt2allg.h"
-#include "acmain/ac_maindefines.h"
-#include "ac/ac_common.h"
+#include "util/wgt2allg.h"
+#include "ac/common.h"
 #include "ac/file.h"
-#include "acmain/ac_string.h"
-#include "ac/gamestate.h"
-#include "gui/guimain.h"
 #include "ac/gamesetupstruct.h"
+#include "ac/gamestate.h"
 #include "ac/global_game.h"
+#include "ac/string.h"
+#include "gui/guimain.h"
 
 extern int guis_need_update;
 extern char saveGameDirectory[260];

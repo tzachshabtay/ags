@@ -1,10 +1,10 @@
 
 #include "ac/global_file.h"
-#include "wgt2allg.h"
-#include "ac/ac_common.h"
-#include "acmain/ac_maindefines.h"
+#include "util/wgt2allg.h"
+#include "ac/common.h"
 #include "ac/file.h"
-#include "ac/rundefines.h"
+#include "ac/runtime_defines.h"
+#include "ac/string.h"
 
 #ifdef WINDOWS_VERSION
 //#include <crtdbg.h>

@@ -1,11 +1,11 @@
 
 #include "ac/global_region.h"
-#include "wgt2allg.h"
-#include "ac/ac_common.h"
-#include "ac/roomstruct.h"
+#include "util/wgt2allg.h"
+#include "ac/common.h"
+#include "ac/draw.h"
 #include "ac/region.h"
 #include "ac/roomstatus.h"
-#include "acmain/ac_draw.h"
+#include "ac/roomstruct.h"
 #include "debug/debug.h"
 #include "script/script.h"
 

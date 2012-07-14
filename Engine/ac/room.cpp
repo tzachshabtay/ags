@@ -1,11 +1,13 @@
 #define USE_CLIB
-#include "wgt2allg.h"
-#include "ac/ac_common.h"
-#include "acmain/ac_maindefines.h"
-#include "ac/audiodefines.h"
+#include "util/wgt2allg.h"
+#include "gfx/ali3d.h"
+#include "ac/common.h"
+#include "media/audio/audiodefines.h"
 #include "ac/charactercache.h"
 #include "ac/characterextras.h"
+#include "ac/draw.h"
 #include "ac/event.h"
+#include "ac/game.h"
 #include "ac/gamesetup.h"
 #include "ac/gamesetupstruct.h"
 #include "ac/gamestate.h"
@@ -13,33 +15,31 @@
 #include "ac/global_character.h"
 #include "ac/global_game.h"
 #include "ac/global_object.h"
+#include "ac/global_translation.h"
+#include "ac/mouse.h"
 #include "ac/objectcache.h"
 #include "ac/overlay.h"
+#include "ac/properties.h"
 #include "ac/region.h"
+#include "ac/record.h"
 #include "ac/room.h"
 #include "ac/roomobject.h"
 #include "ac/roomstatus.h"
+#include "ac/screen.h"
+#include "ac/string.h"
 #include "ac/viewport.h"
 #include "ac/walkablearea.h"
 #include "ac/walkbehind.h"
 #include "ac/dynobj/scriptobject.h"
 #include "ac/dynobj/scripthotspot.h"
-#include "acmain/ac_customproperties.h"
-#include "acmain/ac_draw.h"
-#include "acmain/ac_message.h"
-#include "acmain/ac_mouse.h"
-#include "acmain/ac_record.h"
-#include "acmain/ac_string.h"
-#include "acmain/ac_transition.h"
-#include "acmain/ac_translation.h"
-#include "cs/cc_instance.h"
+#include "script/cc_instance.h"
 #include "debug/debug.h"
 #include "media/audio/audio.h"
 #include "platform/agsplatformdriver.h"
 #include "plugin/agsplugin.h"
 #include "script/script.h"
 #include "script/script_runtime.h"
-#include "sprcache.h"
+#include "ac/spritecache.h"
 
 #if defined(MAC_VERSION) || defined(LINUX_VERSION)
 // for toupper
@@ -80,6 +80,21 @@ extern int starting_room;
 extern unsigned long loopcounter,lastcounter;
 extern int ccError;
 extern char ccErrorString[400];
+extern IDriverDependantBitmap* roomBackgroundBmp;
+extern IGraphicsDriver *gfxDriver;
+extern block raw_saved_screen;
+extern int actSpsCount;
+extern block *actsps;
+extern IDriverDependantBitmap* *actspsbmp;
+extern block *actspswb;
+extern IDriverDependantBitmap* *actspswbbmp;
+extern CachedActSpsData* actspswbcache;
+extern color palette[256];
+extern block virtual_screen;
+extern block _old_screen;
+extern block _sub_screen;
+extern int offsetx, offsety;
+extern int mouse_z_was;
 
 RGB_MAP rgb_table;  // for 256-col antialiasing
 int new_room_flags=0;
@@ -629,7 +644,7 @@ void load_new_room(int newnum,CharacterInfo*forchar) {
     }
     else {
         // We have been here before
-        for (ff = 0; ff < thisroom.numLocalVars; ff++)
+        for (int ff = 0; ff < thisroom.numLocalVars; ff++)
             thisroom.localvars[ff].value = croom->interactionVariableValues[ff];
     }
 
@@ -701,7 +716,7 @@ void load_new_room(int newnum,CharacterInfo*forchar) {
         // sometimes the palette has corrupt entries, which crash
         // the create_rgb_table call
         // so, fix them
-        for (ff = 0; ff < 256; ff++) {
+        for (int ff = 0; ff < 256; ff++) {
             if (palette[ff].r > 63)
                 palette[ff].r = 63;
             if (palette[ff].g > 63)
@@ -718,7 +733,7 @@ void load_new_room(int newnum,CharacterInfo*forchar) {
 
         // if a following character is still waiting to come into the
         // previous room, force it out so that the timer resets
-        for (ff = 0; ff < game.numcharacters; ff++) {
+        for (int ff = 0; ff < game.numcharacters; ff++) {
             if ((game.chars[ff].following >= 0) && (game.chars[ff].room < 0)) {
                 if ((game.chars[ff].following == game.playercharacter) &&
                     (forchar->prevroom == newnum))
@@ -1004,4 +1019,33 @@ void compile_room_script() {
 
     repExecAlways.roomHasFunction = true;
     getDialogOptionsDimensionsFunc.roomHasFunction = true;
+}
+
+int bg_just_changed = 0;
+
+void on_background_frame_change () {
+
+    invalidate_screen();
+    mark_current_background_dirty();
+    invalidate_cached_walkbehinds();
+
+    // get the new frame's palette
+    memcpy (palette, thisroom.bpalettes[play.bg_frame], sizeof(color) * 256);
+
+    // hi-colour, update the palette. It won't have an immediate effect
+    // but will be drawn properly when the screen fades in
+    if (game.color_depth > 1)
+        setpal();
+
+    if (in_enters_screen)
+        return;
+
+    // Don't update the palette if it hasn't changed
+    if (thisroom.ebpalShared[play.bg_frame])
+        return;
+
+    // 256-colours, tell it to update the palette (will actually be done as
+    // close as possible to the screen update to prevent flicker problem)
+    if (game.color_depth == 1)
+        bg_just_changed = 1;
 }

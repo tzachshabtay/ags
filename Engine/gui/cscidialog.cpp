@@ -1,18 +1,19 @@
 
 #include <cctype>
-#include "wgt2allg.h"
-#include "ali3d.h"
-#include "ac/ac_common.h"
+#include "util/wgt2allg.h"
+#include "gfx/ali3d.h"
+#include "ac/common.h"
 #include "ac/gamesetup.h"
-#include "gui/guimain.h"
 #include "ac/gui.h"
-#include "acmain/ac_mouse.h"
-#include "acmain/ac_record.h"
-#include "media/audio/audio.h"
+#include "ac/mouse.h"
+#include "ac/record.h"
+#include "ac/runtime_defines.h"
 #include "gui/cscidialog.h"
 #include "gui/guidialog.h"
+#include "gui/guimain.h"
 #include "gui/mycontrols.h"
 #include "main/game_run.h"
+#include "media/audio/audio.h"
 
 extern char ignore_bounds; // from mousew32
 extern IGraphicsDriver *gfxDriver;

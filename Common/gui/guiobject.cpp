@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include "gui/guiobject.h"
 #include "gui/guimain.h"
-#include "cs/cs_utils.h"		// fputstring, etc
-#include "ac/ac_common.h"		// quit()
+#include "util/string_utils.h"  // fputstring, etc
+#include "ac/common.h"		// quit()
 
 void GUIObject::init() {
   int jj;

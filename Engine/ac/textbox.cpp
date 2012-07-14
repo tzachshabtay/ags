@@ -1,10 +1,10 @@
 
 #include <string.h>
 #include "ac/textbox.h"
-#include "ac/ac_common.h"
-#include "wgt2allg.h"
+#include "ac/common.h"
+#include "util/wgt2allg.h"
 #include "ac/gamesetupstruct.h"
-#include "acmain/ac_string.h"
+#include "ac/string.h"
 
 extern int guis_need_update;
 extern GameSetupStruct game;

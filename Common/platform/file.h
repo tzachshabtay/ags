@@ -22,7 +22,7 @@ short int   getshort(FILE *);
 void        putshort(short int, FILE *);
 #endif // !ALLEGRO_BIG_ENDIAN
 
-#include "bigend.h"
+#include "platform/bigend.h"
 
 //=============================================================================
 //

@@ -1,10 +1,10 @@
 
 #include <stdio.h>
-#include "wgt2allg.h"
-#include "acmain/ac_maindefines.h"
+#include "util/wgt2allg.h"
+#include "ac/common.h"
 #include "ac/guicontrol.h"
 #include "ac/global_gui.h"
-#include "acmain/ac_commonheaders.h"
+#include "debug/debug.h"
 #include "gui/guibutton.h"
 #include "gui/guiinv.h"
 #include "gui/guilabel.h"

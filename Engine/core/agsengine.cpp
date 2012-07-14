@@ -44,6 +44,16 @@ extern "C" int csetlib(char *namm, char *passw);
 extern char *ci_find_file(char *dir_name, char *file_name);
 #endif // USE_CUSTOM_EXCEPTION_HANDLER
 
+// from clib32
+extern char *ci_find_file(char *dir_name, char *file_name);
+extern "C"
+{
+    extern int csetlib(char *namm, char *passw);
+    extern FILE *clibfopen(char *, char *);
+    extern long cliboffset(char *);
+    extern long clibfilesize(char *);
+    extern long last_opened_size;
+}
 
 
 namespace AGS

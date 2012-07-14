@@ -28,7 +28,8 @@
 #include "ac/gui.h"
 #include "ac/viewframe.h"
 #include "media/audio/sound.h"
-#include "sprcache.h"
+#include "ac/spritecache.h"
+#include "ac/dynobj/scriptobject.h"
 
 #if defined(MAC_VERSION) || (defined(LINUX_VERSION) && !defined(PSP_VERSION))
 #include <pthread.h>
