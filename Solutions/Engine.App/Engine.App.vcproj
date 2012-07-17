@@ -1005,11 +1005,11 @@
 				Name="main"
 				>
 				<File
-					RelativePath="..\..\Engine\main\_engine.cpp"
+					RelativePath="..\..\Engine\main\config.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Engine\main\config.cpp"
+					RelativePath="..\..\Engine\main\engine.cpp"
 					>
 				</File>
 				<File
