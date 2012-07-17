@@ -263,34 +263,6 @@
 				</File>
 			</Filter>
 			<Filter
-				Name="platform"
-				>
-				<File
-					RelativePath="..\..\Common\platform\bigend.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Common\platform\file.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Common\platform\path.cpp"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="util"
-				>
-				<File
-					RelativePath="..\..\Common\util\keyvaluetree.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Common\util\string.cpp"
-					>
-				</File>
-			</Filter>
-			<Filter
 				Name="util"
 				>
 				<File
@@ -302,11 +274,27 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Common\util\file.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\util\keyvaluetree.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Common\util\lzw.cpp"
 					>
 				</File>
 				<File
 					RelativePath="..\..\Common\util\misc.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\util\path.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\util\string.cpp"
 					>
 				</File>
 				<File
@@ -361,6 +349,10 @@
 				</File>
 				<File
 					RelativePath="..\..\Common\ac\audiocliptype.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\ac\characterinfo.h"
 					>
 				</File>
 				<File
@@ -513,22 +505,18 @@
 				</File>
 			</Filter>
 			<Filter
-				Name="platform"
+				Name="util"
 				>
 				<File
-					RelativePath="..\..\Common\platform\bigend.h"
+					RelativePath="..\..\Common\util\compress.h"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Common\platform\file.h"
+					RelativePath="..\..\Common\util\file.h"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Common\platform\path.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Common\platform\platform_api.h"
+					RelativePath="..\..\Common\util\path.h"
 					>
 				</File>
 			</Filter>
@@ -536,27 +524,11 @@
 				Name="core"
 				>
 				<File
-					RelativePath="..\..\Common\core\err.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Common\core\out.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Common\core\types.h"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="util"
-				>
-				<File
 					RelativePath="..\..\Common\util\array.h"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Common\util\compress.h"
+					RelativePath="..\..\Common\core\err.h"
 					>
 				</File>
 				<File
@@ -584,6 +556,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Common\core\out.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Common\util\stream.h"
 					>
 				</File>
@@ -593,6 +569,10 @@
 				</File>
 				<File
 					RelativePath="..\..\Common\util\string_utils.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\core\types.h"
 					>
 				</File>
 				<File
@@ -627,6 +607,18 @@
 					RelativePath="..\..\Common\script\script_common.h"
 					>
 				</File>
+			</Filter>
+			<Filter
+				Name="platform"
+				>
+				<Filter
+					Name="base"
+					>
+					<File
+						RelativePath="..\..\Common\platform\base\platform_api.h"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 	</Files>

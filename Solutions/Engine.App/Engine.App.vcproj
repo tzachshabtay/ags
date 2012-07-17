@@ -669,7 +669,7 @@
 				Name="gfx"
 				>
 				<File
-					RelativePath="..\..\Engine\gfx\ali3dd3d.cpp"
+					RelativePath="..\..\Engine\platform\windows\gfx\ali3dd3d.cpp"
 					>
 				</File>
 				<File
@@ -972,11 +972,11 @@
 					Name="video"
 					>
 					<File
-						RelativePath="..\..\Engine\media\video\acwavi.cpp"
+						RelativePath="..\..\Engine\platform\windows\media\video\acwavi.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Engine\media\video\acwavi3d.cpp"
+						RelativePath="..\..\Engine\platform\windows\media\video\acwavi3d.cpp"
 						>
 					</File>
 					<File
@@ -997,7 +997,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Engine\debug\namedpipesagsdebugger.cpp"
+					RelativePath="..\..\Engine\platform\windows\debug\namedpipesagsdebugger.cpp"
 					>
 				</File>
 			</Filter>
@@ -1048,14 +1048,22 @@
 					RelativePath="..\..\Engine\platform\windows\acplwin.cpp"
 					>
 				</File>
-				<File
-					RelativePath="..\..\Engine\platform\ags32bitosdriver.cpp"
+				<Filter
+					Name="base"
 					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\platform\agsplatformdriver.cpp"
+					<File
+						RelativePath="..\..\Engine\platform\base\agsplatformdriver.cpp"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="32bit"
 					>
-				</File>
+					<File
+						RelativePath="..\..\Engine\platform\32bit\ags32bitosdriver.cpp"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="plugin"
@@ -1160,10 +1168,6 @@
 				</File>
 				<File
 					RelativePath="..\..\Engine\ac\characterextras.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Common\ac\characterinfo.h"
 					>
 				</File>
 				<File
@@ -1778,18 +1782,26 @@
 			<Filter
 				Name="platform"
 				>
-				<File
-					RelativePath="..\..\Engine\platform\ags32bitosdriver.h"
+				<Filter
+					Name="base"
 					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\platform\agsplatformdriver.h"
+					<File
+						RelativePath="..\..\Engine\platform\base\agsplatformdriver.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Engine\platform\base\override_defines.h"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="32bit"
 					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\platform\override_defines.h"
-					>
-				</File>
+					<File
+						RelativePath="..\..\Engine\platform\32bit\ags32bitosdriver.h"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="media"
@@ -1895,7 +1907,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Engine\debug\namedpipesagsdebugger.h"
+					RelativePath="..\..\Engine\platform\windows\debug\namedpipesagsdebugger.h"
 					>
 				</File>
 			</Filter>
@@ -2450,6 +2462,10 @@
 				</File>
 				<File
 					RelativePath="..\..\Common\ac\audiocliptype.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\ac\characterinfo.h"
 					>
 				</File>
 				<File

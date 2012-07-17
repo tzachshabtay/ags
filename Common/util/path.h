@@ -4,8 +4,8 @@
 // System path helpers
 //
 //=============================================================================
-#ifndef __AGS_CN_PLATFORM__PATH_H
-#define __AGS_CN_PLATFORM__PATH_H
+#ifndef __AGS_CN_UTIL__PATH_H
+#define __AGS_CN_UTIL__PATH_H
 
 #include "Common/core/err.h"
 #include "Common/util/string.h"
@@ -14,11 +14,11 @@ namespace AGS
 {
 namespace Common
 {
-namespace Platform
+namespace Util
 {
 
 using AGS::Common::Core::HErr;
-using AGS::Common::Util::CString;
+//using AGS::Common::Util::CString;
 
 namespace Path
 {
@@ -42,8 +42,8 @@ HErr    SetCurrentDirectory(const CString &dir_name);
 
 } // namespace Path
 
-} // namespace Platform
+} // namespace Util
 } // namespace Common
 } // namespace AGS
 
-#endif // __AGS_CN_PLATFORM__PATH_H
+#endif // __AGS_CN_UTIL__PATH_H

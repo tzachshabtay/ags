@@ -10,7 +10,7 @@
 #define __AGS_EE_CORE__AGSENGINE_H
 
 #include "Common/core/err.h"
-#include "Common/platform/platform_api.h"
+#include "Common/platform/base/platform_api.h"
 #include "Engine/util/cmdargs.h"
 
 #if defined(WINDOWS_VERSION) && !defined(_DEBUG)

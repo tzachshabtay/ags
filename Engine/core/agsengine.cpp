@@ -5,14 +5,14 @@
 #include "Common/core/err.h"
 #include "Common/core/out.h"
 #include "Common/util/string.h"
-#include "Common/platform/file.h"
-#include "Common/platform/path.h"
+#include "Common/util/file.h"
+#include "Common/util/path.h"
 #include "Engine/core/agsengine.h"
 #include "Engine/core/engine_setup.h"
 #include "Engine/debug/agseditordebugger.h"
 #include "Engine/game/agsgame.h"
 #include "Engine/util/inifile.h"
-#include "Engine/platform/agsplatformdriver.h"
+#include "Engine/platform/base/agsplatformdriver.h"
 
 // FIXME! this should not be used like that
 #define RETURN_CONTINUE 1
@@ -64,12 +64,12 @@ namespace Core
 {
 
 // Namespace aliases
-namespace Path = AGS::Common::Platform::Path;
+namespace Path = AGS::Common::Util::Path;
 namespace Out  = AGS::Common::Core::Out; 
 
 // Using-declarations
 using AGS::Common::Core::CErrorHandle;
-using AGS::Common::Platform::CFile;
+using AGS::Common::Util::CFile;
 using AGS::Engine::Util::CINIFile;
 namespace Err = AGS::Common::Core::Err;
 

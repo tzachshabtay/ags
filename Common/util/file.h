@@ -6,8 +6,8 @@
 // TODO: abstract interface wrapper around file handle
 //
 //=============================================================================
-#ifndef __AGS_CN_PLATFORM__FILE_H
-#define __AGS_CN_PLATFORM__FILE_H
+#ifndef __AGS_CN_UTIL__FILE_H
+#define __AGS_CN_UTIL__FILE_H
 
 #include <stdio.h>
 // TODO: other platforms?
@@ -16,13 +16,14 @@
 long int filelength(int fhandle);
 #endif
 
+#if defined ALLEGRO_BIG_ENDIAN
+#include "platform/bigend/bigend.h"
+#else !ALLEGRO_BIG_ENDIAN
 // Two functions to match those defined by bigend version by McCrea
-#if !defined ALLEGRO_BIG_ENDIAN
 short int   getshort(FILE *);
 void        putshort(short int, FILE *);
 #endif // !ALLEGRO_BIG_ENDIAN
 
-#include "platform/bigend.h"
 
 //=============================================================================
 //
@@ -36,10 +37,10 @@ namespace AGS
 {
 namespace Common
 {
-namespace Platform
+namespace Util
 {
 
-using AGS::Common::Util::CString;
+//using AGS::Common::Util::CString;
 
 struct CFile
 {
@@ -48,8 +49,8 @@ struct CFile
     static CFile *Open(const CString &file_name, const CString &opt);
 };
 
-} // namespace Platform
+} // namespace Util
 } // namespace Common
 } // namespace AGS
 
-#endif // __AGS_CN_PLATFORM__FILE_H
+#endif // __AGS_CN_UTIL__FILE_H

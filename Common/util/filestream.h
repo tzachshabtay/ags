@@ -8,7 +8,7 @@
 #define __AGS_CN_UTILS__FILESTREAM_H
 
 #include "Common/util/stream.h"
-#include "Common/platform/file.h"
+#include "Common/util/file.h"
 
 namespace AGS
 {
@@ -17,7 +17,7 @@ namespace Common
 namespace Util
 {
 
-struct AGS::Common::Platform::CFile;
+struct AGS::Common::Util::CFile;
 
 struct CFileStream : public CStream
 {
