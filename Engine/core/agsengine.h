@@ -53,7 +53,6 @@ using AGS::Engine::Util::CCmdArgs;
 
 class CAGSEngine
 {
-    friend void atexit_handler();
 public:
     ~CAGSEngine();
 
@@ -61,21 +60,47 @@ public:
     static HErr         CreateInstance();
     // Gets the instance of AGS Engine; does not implicitly constructs one
     static CAGSEngine   *GetInstance();
+    // Destroys the only instance of AGS
+    static void         DestroyInstance();
 
     CString         GetEngineVersion() const;
     void            SetEIP(int32_t eip);
     int32_t         GetEIP() const;
+    const CCmdArgs  &GetCmdArgs() const;
 
     CEngineSetup   *GetSetup() const;
     CAGSGame       *GetGame() const;
 
-    HErr            Initialize(const CCmdArgs &cmdargs);
-    HErr            StartUp();
-    HErr            StartUpWithExceptionHandling();
+    // There are three ways of running the Engine:
+    // first is to call StartUpAndRun() and let it handle the rest;
+    // second is to call StartUp(), then RunLoop();
+    // third is to call StartUp(), then continuously call Run() in the loop.
+    //
+    // Sequentially Calls StartUp and RunLoop
+    HErr            StartUpAndRun(const CCmdArgs &cmdargs);
+    // Prepares the Engine and puts it in the running state
+    HErr            StartUp(const CCmdArgs &cmdargs);
+    // Runs the Engine loop until game is quit or aborted
+    HErr            RunLoop();
+    // Runs a single Engine iteration
+    HErr            Run();
 
 protected:
 
-    HErr ProcessCmdLine(const CCmdArgs &cmdargs);
+    // Internal callee, do most of the actual work
+    HErr            _StartUp();
+    HErr            _RunLoop();
+    HErr            _Run();
+    // Call the above, additionally catch exceptions and write crash dump
+    HErr            _StartUpWithExceptionHandling();
+    HErr            _RunLoopWithExceptionHandling();
+    HErr            _RunWithExceptionHandling();
+#ifdef USE_CUSTOM_EXCEPTION_HANDLER
+    // Exception handling routine
+    void            OnException();
+#endif
+
+    HErr ProcessCmdLine();
     HErr ReadConfigFile();
     HErr InitAllegro();
     HErr InitWindow();
@@ -84,9 +109,9 @@ protected:
     int  InitGameDataExternal(); // returns clib's errcode
     HErr InitGameDataInternal();
     
-    HErr Run();
     HErr RunSetup();
 
+    static int  MallocFailHandler(size_t amountwanted);
     static void AllegroExitHandler();
     static void WindowCloseHandler();
 
@@ -158,6 +183,7 @@ private:
     int32_t             _eip;
     int32_t             _eipGuiNum;
     int32_t             _eipGuiObj;
+    CCmdArgs            _cmdArgs;
     CString             _appExeName;
     CString             _appDirectory;
     CString             _gameDataFileName;
@@ -178,6 +204,11 @@ private:
     bool                _wantExit;
     bool                _abortEngine;
     bool                _checkDynamicSpritesAtExit;
+
+    // Basically, this is a ballast: it points to some extra unused memory
+    // block that is allocated on startup and deleted to free space for
+    // any memory shortage handling.
+    char                *_emergencyWorkingSpace;
 
 };
 

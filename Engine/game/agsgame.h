@@ -25,7 +25,7 @@ public:
     ~CAGSGame();
 
     // TODO: this should be made const
-    /*const*/ GameState *GetGameState() /*const*/;
+    /*const*/ GameState &GetGameState() /*const*/;
 
     void            Initialize();
 

@@ -2,11 +2,17 @@
 #if !defined(LINUX_VERSION) && !defined(MAC_VERSION)
 #include <process.h>
 #endif
+#if defined(WINDOWS_VERSION)
+#include <new.h>
+#endif
+#include "Common/ac/common.h"
 #include "Common/core/err.h"
 #include "Common/core/out.h"
 #include "Common/util/string.h"
 #include "Common/util/file.h"
 #include "Common/util/path.h"
+#include "Common/util/wgt2allg.h"
+#include "Engine/ac/route_finder.h"
 #include "Engine/core/agsengine.h"
 #include "Engine/core/engine_setup.h"
 #include "Engine/debug/agseditordebugger.h"
@@ -45,6 +51,7 @@ extern char *ci_find_file(char *dir_name, char *file_name);
 #endif // USE_CUSTOM_EXCEPTION_HANDLER
 
 // from clib32
+extern "C" int cfopenpriority;
 extern char *ci_find_file(char *dir_name, char *file_name);
 extern "C"
 {
@@ -101,6 +108,15 @@ CAGSEngine *CAGSEngine::GetInstance()
     return _theEngine;
 }
 
+void CAGSEngine::DestroyInstance()
+{
+    if (_theEngine)
+    {
+        delete _theEngine;
+    }
+    _theEngine = NULL;
+}
+
 CString CAGSEngine::GetEngineVersion() const
 {
     return CString(ACI_VERSION_TEXT);
@@ -116,6 +132,11 @@ int32_t CAGSEngine::GetEIP() const
     return _eip;
 }
 
+const CCmdArgs &CAGSEngine::GetCmdArgs() const
+{
+    return _cmdArgs;
+}
+
 CEngineSetup *CAGSEngine::GetSetup() const
 {
     return _theSetup;
@@ -126,17 +147,110 @@ CAGSGame *CAGSEngine::GetGame() const
     return _theGame;
 }
 
-HErr CAGSEngine::Initialize(const CCmdArgs &cmdargs)
+HErr CAGSEngine::StartUpAndRun(const CCmdArgs &cmdargs)
 {
-    _platform = AGSPlatformDriver::GetDriver();
+    HErr err = StartUp(cmdargs);
+    if (!err->IsNil())
+    {
+        return err;
+    }
 
-    _theSetup->DebugFlags = 0;
-    return ProcessCmdLine(cmdargs);
+    err = _RunLoop();
+    return err;
 }
 
-HErr CAGSEngine::StartUp()
+HErr CAGSEngine::StartUp(const CCmdArgs &cmdargs)
+{
+    _cmdArgs = cmdargs;
+    _platform = AGSPlatformDriver::GetDriver();
+
+    HErr err = ProcessCmdLine();
+    if (!err->IsNil())
+    {
+        return err;
+    }
+
+    // Update shell associations and exit
+    if (/*debug_flags*/
+        _theSetup->DebugFlags & DBG_REGONLY)
+    {
+        exit(0); // [IKM] FIXME: this will cause grand memory leak, should we return Err::FromCode(0)?
+    }
+
+#if defined(WINDOWS_VERSION)
+    _set_new_handler(MallocFailHandler);
+    _set_new_mode(1);
+    // [IKM] I do not know where 7000 comes from, but why the heck not
+    _emergencyWorkingSpace = (char*)malloc(7000);
+#endif
+
+#ifndef USE_CUSTOM_EXCEPTION_HANDLER
+    _theSetup->DisableExceptionHandling = 1;
+#endif
+
+    if (_theSetup->DisableExceptionHandling)
+    {
+        err = _StartUp();
+    }
+    else
+    {
+        err = _StartUpWithExceptionHandling();
+    }
+
+    return err;
+}
+
+HErr CAGSEngine::RunLoop()
 {
     HErr err;
+    if (_theSetup->DisableExceptionHandling)
+    {
+        err = _RunLoop();
+    }
+    else
+    {
+        err = _RunLoopWithExceptionHandling();
+    }
+
+    return err;
+}
+
+HErr CAGSEngine::Run()
+{
+    HErr err;
+    if (_theSetup->DisableExceptionHandling)
+    {
+        err = _Run();
+    }
+    else
+    {
+        err = _RunWithExceptionHandling();
+    }
+
+    return err;
+}
+
+HErr CAGSEngine::_StartUp()
+{
+    HErr err;
+
+    SetEIP(-999);
+    cfopenpriority=2; // Clib32
+    _theGame->Initialize(); // perhaps move to Engine::StartUp
+
+    // [IKM] For some bizzare reason this function is a part of routefnd module;
+    // I cannot just move it here, because it references certain variables from
+    // that module and so probably somehow related to it, in a logical or maybe
+    // philosophical way, I just cannot figure out what at the time being.
+    print_welcome_text(AC_VERSION_TEXT,ACI_VERSION_TEXT);
+
+    // [IKM] FIXME: what's this?
+    /*
+    if ((argc>1) && (argv[1][1]=='?'))
+        return 0;
+    */
+
+    Out::Notify("***** ENGINE STARTUP");
 
     ReadConfigFile();
 
@@ -332,38 +446,94 @@ HErr CAGSEngine::StartUp()
     return 0;
 }
 
-HErr CAGSEngine::StartUpWithExceptionHandling()
+HErr CAGSEngine::_RunLoop()
 {
-    Out::Notify("Installing exception handler");
+    // Main engine loop
+    while(true/*sort of...*/)
+    {
+        HErr err = Run();
+        if (!err->IsNil())
+        {
+            return err;
+        }
+    }
 
+    return Err::Nil();
+}
+
+HErr CAGSEngine::_Run()
+{
+    return Err::Nil();
+}
+
+HErr CAGSEngine::_StartUpWithExceptionHandling()
+{
 #ifdef USE_CUSTOM_EXCEPTION_HANDLER
     __try 
     {
 #endif
-
-        return StartUp();
-
+        return _StartUp();
 #ifdef USE_CUSTOM_EXCEPTION_HANDLER
     }
     __except (CustomExceptionHandler ( GetExceptionInformation() )) 
     {
-        //strcpy (tempmsg, "");
-        CString tempmsg; // what is it for?
-        CString msg;
-        msg.Format("An exception 0x%X occurred in ACWIN.EXE at EIP = 0x%08X %s; program pointer is %+d, ACI version " ACI_VERSION_TEXT ", gtags (%d,%d)\n\n"
-            "AGS cannot continue, this exception was fatal. Please note down the numbers above, remember what you were doing at the time and post the details on the AGS Technical Forum.\n\n%s\n\n"
-            "Most versions of Windows allow you to press Ctrl+C now to copy this entire message to the clipboard for easy reporting.\n\n%s (code %d)",
-            excinfo.ExceptionCode, excinfo.ExceptionAddress, tempmsg.GetCStr(), _eip, _eipGuiNum, _eipGuiObj, get_cur_script(5),
-            (miniDumpResultCode == 0) ? "An error file CrashInfo.dmp has been created. You may be asked to upload this file when reporting this problem on the AGS Forums." : 
-            "Unable to create an error dump file.", miniDumpResultCode);
-        MessageBoxA(_hAllegroWnd, msg.GetCStr(), "Illegal exception", MB_ICONSTOP | MB_OK);
-        _properExit = true;
+        OnException();
     }
     return Err::FromCode(EXIT_CRASH);
 #endif
 }
 
-HErr CAGSEngine::ProcessCmdLine(const CCmdArgs &cmdargs)
+HErr CAGSEngine::_RunLoopWithExceptionHandling()
+{
+#ifdef USE_CUSTOM_EXCEPTION_HANDLER
+    __try 
+    {
+#endif
+        return _RunLoop();
+#ifdef USE_CUSTOM_EXCEPTION_HANDLER
+    }
+    __except (CustomExceptionHandler ( GetExceptionInformation() )) 
+    {
+        OnException();
+    }
+    return Err::FromCode(EXIT_CRASH);
+#endif
+}
+
+HErr CAGSEngine::_RunWithExceptionHandling()
+{
+#ifdef USE_CUSTOM_EXCEPTION_HANDLER
+    __try 
+    {
+#endif
+        return _Run();
+#ifdef USE_CUSTOM_EXCEPTION_HANDLER
+    }
+    __except (CustomExceptionHandler ( GetExceptionInformation() )) 
+    {
+        OnException();
+    }
+    return Err::FromCode(EXIT_CRASH);
+#endif
+}
+
+#ifdef USE_CUSTOM_EXCEPTION_HANDLER
+void CAGSEngine::OnException()
+{
+    CString tempmsg; // what is it for?
+    CString msg;
+    msg.Format("An exception 0x%X occurred in ACWIN.EXE at EIP = 0x%08X %s; program pointer is %+d, ACI version " ACI_VERSION_TEXT ", gtags (%d,%d)\n\n"
+        "AGS cannot continue, this exception was fatal. Please note down the numbers above, remember what you were doing at the time and post the details on the AGS Technical Forum.\n\n%s\n\n"
+        "Most versions of Windows allow you to press Ctrl+C now to copy this entire message to the clipboard for easy reporting.\n\n%s (code %d)",
+        excinfo.ExceptionCode, excinfo.ExceptionAddress, tempmsg.GetCStr(), _eip, _eipGuiNum, _eipGuiObj, get_cur_script(5),
+        (miniDumpResultCode == 0) ? "An error file CrashInfo.dmp has been created. You may be asked to upload this file when reporting this problem on the AGS Forums." : 
+        "Unable to create an error dump file.", miniDumpResultCode);
+    MessageBoxA(_hAllegroWnd, msg.GetCStr(), "Illegal exception", MB_ICONSTOP | MB_OK);
+    _properExit = true;
+}
+#endif
+
+HErr CAGSEngine::ProcessCmdLine()
 {
     int force_window        = 0;
     int force_letterbox     = 0;
@@ -384,72 +554,72 @@ HErr CAGSEngine::ProcessCmdLine(const CCmdArgs &cmdargs)
     //
     // Parse order independent options
     //
-    if (cmdargs.ContainsArgKey("-shelllaunch"))         _mustChangeToGameDataDirectory = true;        
-    if (cmdargs.ContainsArgKey("-updatereg"))           _theSetup->DebugFlags |= DBG_REGONLY;        
-    if (cmdargs.ContainsArgKey("-windowed"))            force_window = 1;        
-    if (cmdargs.ContainsArgKey("-fullscreen"))          force_window = 2;
-    if (cmdargs.ContainsArgKey("-hicolor"))             force_16bit = 1;        
-    if (cmdargs.ContainsArgKey("-letterbox"))           force_letterbox = 1;        
-    if (cmdargs.ContainsArgKey("-record"))              _theGame->GetGameState()->recording = 1;        
-    if (cmdargs.ContainsArgKey("-playback"))            _theGame->GetGameState()->playback = 1;        
-    if (cmdargs.ContainsArgKey("--setup"))              _mustRunSetup = true;
-    if (cmdargs.ContainsArgKey("--15bit"))              debug_15bit_mode = 1;
-    if (cmdargs.ContainsArgKey("--24bit"))              debug_24bit_mode = 1;
-    if (cmdargs.ContainsArgKey("--fps"))                display_fps = 2;
-    if (cmdargs.ContainsArgKey("--test"))               _theSetup->DebugFlags|=DBG_DEBUGMODE;
-    if (cmdargs.ContainsArgKey("-noiface"))             _theSetup->DebugFlags|=DBG_NOIFACE;
-    if (cmdargs.ContainsArgKey("-nosprdisp"))           _theSetup->DebugFlags|=DBG_NODRAWSPRITES;
-    if (cmdargs.ContainsArgKey("-nospr"))               _theSetup->DebugFlags|=DBG_NOOBJECTS;
-    if (cmdargs.ContainsArgKey("-noupdate"))            _theSetup->DebugFlags|=DBG_NOUPDATE;
-    if (cmdargs.ContainsArgKey("-nosound"))             _theSetup->DebugFlags|=DBG_NOSFX;
-    if (cmdargs.ContainsArgKey("-nomusic"))             _theSetup->DebugFlags|=DBG_NOMUSIC;
-    if (cmdargs.ContainsArgKey("-noscript"))            _theSetup->DebugFlags|=DBG_NOSCRIPT;
-    if (cmdargs.ContainsArgKey("-novideo"))             _theSetup->DebugFlags|=DBG_NOVIDEO;
-    if (cmdargs.ContainsArgKey("-noexceptionhandler"))  _theSetup->DisableExceptionHandling = 1;
-    if (cmdargs.ContainsArgKey("-dbgscript"))           _theSetup->DebugFlags|=DBG_DBGSCRIPT;
-    if (cmdargs.ContainsArgKey("-registergame"))        just_register_game = true;
-    if (cmdargs.ContainsArgKey("-unregistergame"))      just_unregister_game = true;    
+    if (_cmdArgs.ContainsArgKey("-shelllaunch"))         _mustChangeToGameDataDirectory = true;        
+    if (_cmdArgs.ContainsArgKey("-updatereg"))           _theSetup->DebugFlags |= DBG_REGONLY;        
+    if (_cmdArgs.ContainsArgKey("-windowed"))            force_window = 1;        
+    if (_cmdArgs.ContainsArgKey("-fullscreen"))          force_window = 2;
+    if (_cmdArgs.ContainsArgKey("-hicolor"))             force_16bit = 1;        
+    if (_cmdArgs.ContainsArgKey("-letterbox"))           force_letterbox = 1;        
+    if (_cmdArgs.ContainsArgKey("-record"))              _theGame->GetGameState().recording = 1;        
+    if (_cmdArgs.ContainsArgKey("-playback"))            _theGame->GetGameState().playback = 1;        
+    if (_cmdArgs.ContainsArgKey("--setup"))              _mustRunSetup = true;
+    if (_cmdArgs.ContainsArgKey("--15bit"))              debug_15bit_mode = 1;
+    if (_cmdArgs.ContainsArgKey("--24bit"))              debug_24bit_mode = 1;
+    if (_cmdArgs.ContainsArgKey("--fps"))                display_fps = 2;
+    if (_cmdArgs.ContainsArgKey("--test"))               _theSetup->DebugFlags|=DBG_DEBUGMODE;
+    if (_cmdArgs.ContainsArgKey("-noiface"))             _theSetup->DebugFlags|=DBG_NOIFACE;
+    if (_cmdArgs.ContainsArgKey("-nosprdisp"))           _theSetup->DebugFlags|=DBG_NODRAWSPRITES;
+    if (_cmdArgs.ContainsArgKey("-nospr"))               _theSetup->DebugFlags|=DBG_NOOBJECTS;
+    if (_cmdArgs.ContainsArgKey("-noupdate"))            _theSetup->DebugFlags|=DBG_NOUPDATE;
+    if (_cmdArgs.ContainsArgKey("-nosound"))             _theSetup->DebugFlags|=DBG_NOSFX;
+    if (_cmdArgs.ContainsArgKey("-nomusic"))             _theSetup->DebugFlags|=DBG_NOMUSIC;
+    if (_cmdArgs.ContainsArgKey("-noscript"))            _theSetup->DebugFlags|=DBG_NOSCRIPT;
+    if (_cmdArgs.ContainsArgKey("-novideo"))             _theSetup->DebugFlags|=DBG_NOVIDEO;
+    if (_cmdArgs.ContainsArgKey("-noexceptionhandler"))  _theSetup->DisableExceptionHandling = 1;
+    if (_cmdArgs.ContainsArgKey("-dbgscript"))           _theSetup->DebugFlags|=DBG_DBGSCRIPT;
+    if (_cmdArgs.ContainsArgKey("-registergame"))        just_register_game = true;
+    if (_cmdArgs.ContainsArgKey("-unregistergame"))      just_unregister_game = true;    
 
     //
     // Parse order dependent options
     //
-    _appExeName = cmdargs[0];
+    _appExeName = _cmdArgs[0];
 
     int datafile_argv = 0;
-    for (int i = 1; i < cmdargs.GetCount(); ++i) {
-        if (cmdargs[i][1]=='?') return 0;
+    for (int i = 1; i < _cmdArgs.GetCount(); ++i) {
+        if (_cmdArgs[i][1]=='?') return 0;
 #ifdef _DEBUG
-        if ((cmdargs[i].Compare("--startr") == 0) && (i < cmdargs.GetCount()-1)) {
-            override_start_room = cmdargs[i+1].ToInt();
+        if ((_cmdArgs[i].Compare("--startr") == 0) && (i < _cmdArgs.GetCount()-1)) {
+            override_start_room = _cmdArgs[i+1].ToInt();
             i++;
         }
 #endif
-        else if ((cmdargs[i].Compare("--testre") == 0) && (i < cmdargs.GetCount()-2)) {
-            return_to_roomedit  = cmdargs[i+1];
-            return_to_room      = cmdargs[i+2];
+        else if ((_cmdArgs[i].Compare("--testre") == 0) && (i < _cmdArgs.GetCount()-2)) {
+            return_to_roomedit  = _cmdArgs[i+1];
+            return_to_room      = _cmdArgs[i+2];
             i+=2;
         }
-        else if ((cmdargs[i].Compare("-loadsavedgame") == 0) && (cmdargs.GetCount() > i + 1))
+        else if ((_cmdArgs[i].Compare("-loadsavedgame") == 0) && (_cmdArgs.GetCount() > i + 1))
         {
-            load_savegame_onstartup = cmdargs[i + 1];
+            load_savegame_onstartup = _cmdArgs[i + 1];
             i++;
         }
-        else if ((cmdargs[i].Compare("--enabledebugger") == 0) && (cmdargs.GetCount() > i + 1))
+        else if ((_cmdArgs[i].Compare("--enabledebugger") == 0) && (_cmdArgs.GetCount() > i + 1))
         {
-            editor_debugger_instance_token = cmdargs[i + 1];
+            editor_debugger_instance_token = _cmdArgs[i + 1];
             editor_debugging_enabled = 1;
             force_window = 1;
             i++;
         }
-        else if (cmdargs[i].Compare("--takeover")==0) {
-            if (cmdargs.GetCount() < i+2)
+        else if (_cmdArgs[i].Compare("--takeover")==0) {
+            if (_cmdArgs.GetCount() < i+2)
                 break;
-            _theGame->GetGameState()->takeover_data = cmdargs[i + 1].ToInt();
-            strncpy (_theGame->GetGameState()->takeover_from, cmdargs[i + 2].GetCStr(), 49);
-            _theGame->GetGameState()->takeover_from[49] = 0;
+            _theGame->GetGameState().takeover_data = _cmdArgs[i + 1].ToInt();
+            strncpy (_theGame->GetGameState().takeover_from, _cmdArgs[i + 2].GetCStr(), 49);
+            _theGame->GetGameState().takeover_from[49] = 0;
             i += 2;
         }
-        else if (cmdargs[i][0]!='-') datafile_argv=i;
+        else if (_cmdArgs[i][0]!='-') datafile_argv=i;
     }
 
     // Force to run in a window, override the config file
@@ -458,11 +628,11 @@ HErr CAGSEngine::ProcessCmdLine(const CCmdArgs &cmdargs)
     else if (force_window == 2)
         _theSetup->Windowed = 0;
 
-    if ((!load_savegame_onstartup.IsEmpty()) && (!cmdargs[0].IsEmpty()))
+    if ((!load_savegame_onstartup.IsEmpty()) && (!_cmdArgs[0].IsEmpty()))
     {
         // When launched by double-clicking a save game file, the curdir will
         // be the save game folder unless we correct it
-        Path::SetCurrentDirectory(Path::GetParentPath(cmdargs[0]));
+        Path::SetCurrentDirectory(Path::GetParentPath(_cmdArgs[0]));
     }
 
     _appDirectory = Path::GetCurrentDirectory();
@@ -471,10 +641,10 @@ HErr CAGSEngine::ProcessCmdLine(const CCmdArgs &cmdargs)
     if (datafile_argv > 0) {
         // If launched by double-clicking .AGS file, change to that
         // folder; else change to this exe's folder
-        Path::SetCurrentDirectory(Path::GetParentPath(cmdargs[datafile_argv]));        
+        Path::SetCurrentDirectory(Path::GetParentPath(_cmdArgs[datafile_argv]));        
     }
 
-    _gameDataFileName = cmdargs[datafile_argv];
+    _gameDataFileName = _cmdArgs[datafile_argv];
     _gameDataDirectory = Path::GetCurrentDirectory();
 
     return Err::Nil();
@@ -579,11 +749,6 @@ HErr CAGSEngine::InitWindow()
     return Err::Nil();
 }
 
-HErr CAGSEngine::Run()
-{
-    return Err::Nil();
-}
-
 HErr CAGSEngine::RunSetup()
 {
     Out::Notify("Running Setup");
@@ -607,6 +772,18 @@ HErr CAGSEngine::RunSetup()
 
     return Err::Nil();
 }
+
+#if defined(WINDOWS_VERSION)
+/* static */ int CAGSEngine::MallocFailHandler(size_t amountwanted) {
+    // Drop the ballast to ensure some free memory space
+    free(_theEngine->_emergencyWorkingSpace);
+
+    char tempmsg[100];
+    sprintf(tempmsg,"Out of memory: failed to allocate %ld bytes (at PP=%d)",amountwanted, _theEngine->GetEIP());
+    quit(tempmsg);
+    return 0;
+}
+#endif
 
 /* static */ void CAGSEngine::AllegroExitHandler() {
     if (!_theEngine->_properExit) {
@@ -876,7 +1053,7 @@ void CAGSEngine::engine_init_rooms()
 int CAGSEngine::engine_init_speech()
 {
 #ifdef ______NOT_NOW
-    _theGame->GetGameState()->want_speech=-2;
+    _theGame->GetGameState().want_speech=-2;
 
     FILE*ppp;
 
@@ -930,7 +1107,7 @@ int CAGSEngine::engine_init_speech()
             }
             csetlib(game_file_name,"");
             _platform->WriteConsole("Speech sample file found and initialized.\n");
-            _theGame->GetGameState()->want_speech=1;
+            _theGame->GetGameState().want_speech=1;
         }
     }
 #endif
@@ -942,7 +1119,7 @@ int CAGSEngine::engine_init_music()
 {
 #ifdef ______NOT_NOW
     FILE*ppp;
-    _theGame->GetGameState()->seperate_music_lib = 0;
+    _theGame->GetGameState().seperate_music_lib = 0;
 
     /* Can't just use fopen here, since we need to change the filename
     so that pack functions, etc. will have the right case later */
@@ -973,7 +1150,7 @@ int CAGSEngine::engine_init_music()
         }
         csetlib(game_file_name,"");
         _platform->WriteConsole("Audio vox found and initialized.\n");
-        _theGame->GetGameState()->seperate_music_lib = 1;
+        _theGame->GetGameState().seperate_music_lib = 1;
     }
 #endif
 
@@ -1062,8 +1239,8 @@ void CAGSEngine::engine_init_sound()
         // disable speech and music if no digital sound
         // therefore the MIDI soundtrack will be used if present,
         // and the voice mode should not go to Voice Only
-        _theGame->GetGameState()->want_speech = -2;
-        _theGame->GetGameState()->seperate_music_lib = 0;
+        _theGame->GetGameState().want_speech = -2;
+        _theGame->GetGameState().seperate_music_lib = 0;
     }
 #endif
 }
@@ -1096,8 +1273,8 @@ void CAGSEngine::engine_init_exit_handler()
 void CAGSEngine::engine_init_rand()
 {
 #ifdef ______NOT_NOW
-    _theGame->GetGameState()->randseed = time(NULL);
-    srand (_theGame->GetGameState()->randseed);
+    _theGame->GetGameState().randseed = time(NULL);
+    srand (_theGame->GetGameState().randseed);
 #endif
 }
 
@@ -1450,141 +1627,141 @@ void CAGSEngine::init_game_settings() {
         if (game.invinfo[ee].flags & IFLG_STARTWITH) playerchar->inv[ee]=1;
         else playerchar->inv[ee]=0;
     }
-    _theGame->GetGameState()->score=0;
-    _theGame->GetGameState()->sierra_inv_color=7;
-    _theGame->GetGameState()->talkanim_speed = 5;
-    _theGame->GetGameState()->inv_item_wid = 40;
-    _theGame->GetGameState()->inv_item_hit = 22;
-    _theGame->GetGameState()->messagetime=-1;
-    _theGame->GetGameState()->disabled_user_interface=0;
-    _theGame->GetGameState()->gscript_timer=-1;
-    _theGame->GetGameState()->debug_mode=game.options[OPT_DEBUGMODE];
-    _theGame->GetGameState()->inv_top=0;
-    _theGame->GetGameState()->inv_numdisp=0;
-    _theGame->GetGameState()->obsolete_inv_numorder=0;
-    _theGame->GetGameState()->text_speed=15;
-    _theGame->GetGameState()->text_min_display_time_ms = 1000;
-    _theGame->GetGameState()->ignore_user_input_after_text_timeout_ms = 500;
-    _theGame->GetGameState()->ignore_user_input_until_time = 0;
-    _theGame->GetGameState()->lipsync_speed = 15;
-    _theGame->GetGameState()->close_mouth_speech_time = 10;
-    _theGame->GetGameState()->disable_antialiasing = 0;
-    _theGame->GetGameState()->rtint_level = 0;
-    _theGame->GetGameState()->rtint_light = 255;
-    _theGame->GetGameState()->text_speed_modifier = 0;
-    _theGame->GetGameState()->text_align = SCALIGN_LEFT;
+    _theGame->GetGameState().score=0;
+    _theGame->GetGameState().sierra_inv_color=7;
+    _theGame->GetGameState().talkanim_speed = 5;
+    _theGame->GetGameState().inv_item_wid = 40;
+    _theGame->GetGameState().inv_item_hit = 22;
+    _theGame->GetGameState().messagetime=-1;
+    _theGame->GetGameState().disabled_user_interface=0;
+    _theGame->GetGameState().gscript_timer=-1;
+    _theGame->GetGameState().debug_mode=game.options[OPT_DEBUGMODE];
+    _theGame->GetGameState().inv_top=0;
+    _theGame->GetGameState().inv_numdisp=0;
+    _theGame->GetGameState().obsolete_inv_numorder=0;
+    _theGame->GetGameState().text_speed=15;
+    _theGame->GetGameState().text_min_display_time_ms = 1000;
+    _theGame->GetGameState().ignore_user_input_after_text_timeout_ms = 500;
+    _theGame->GetGameState().ignore_user_input_until_time = 0;
+    _theGame->GetGameState().lipsync_speed = 15;
+    _theGame->GetGameState().close_mouth_speech_time = 10;
+    _theGame->GetGameState().disable_antialiasing = 0;
+    _theGame->GetGameState().rtint_level = 0;
+    _theGame->GetGameState().rtint_light = 255;
+    _theGame->GetGameState().text_speed_modifier = 0;
+    _theGame->GetGameState().text_align = SCALIGN_LEFT;
     // Make the default alignment to the right with right-to-left text
     if (game.options[OPT_RIGHTLEFTWRITE])
-        _theGame->GetGameState()->text_align = SCALIGN_RIGHT;
+        _theGame->GetGameState().text_align = SCALIGN_RIGHT;
 
-    _theGame->GetGameState()->speech_bubble_width = get_fixed_pixel_size(100);
-    _theGame->GetGameState()->bg_frame=0;
-    _theGame->GetGameState()->bg_frame_locked=0;
-    _theGame->GetGameState()->bg_anim_delay=0;
-    _theGame->GetGameState()->anim_background_speed = 0;
-    _theGame->GetGameState()->silent_midi = 0;
-    _theGame->GetGameState()->current_music_repeating = 0;
-    _theGame->GetGameState()->skip_until_char_stops = -1;
-    _theGame->GetGameState()->get_loc_name_last_time = -1;
-    _theGame->GetGameState()->get_loc_name_save_cursor = -1;
-    _theGame->GetGameState()->restore_cursor_mode_to = -1;
-    _theGame->GetGameState()->restore_cursor_image_to = -1;
-    _theGame->GetGameState()->ground_level_areas_disabled = 0;
-    _theGame->GetGameState()->next_screen_transition = -1;
-    _theGame->GetGameState()->temporarily_turned_off_character = -1;
-    _theGame->GetGameState()->inv_backwards_compatibility = 0;
-    _theGame->GetGameState()->gamma_adjustment = 100;
-    _theGame->GetGameState()->num_do_once_tokens = 0;
-    _theGame->GetGameState()->do_once_tokens = NULL;
-    _theGame->GetGameState()->music_queue_size = 0;
-    _theGame->GetGameState()->shakesc_length = 0;
-    _theGame->GetGameState()->wait_counter=0;
-    _theGame->GetGameState()->key_skip_wait = 0;
-    _theGame->GetGameState()->cur_music_number=-1;
-    _theGame->GetGameState()->music_repeat=1;
-    _theGame->GetGameState()->music_master_volume=160;
-    _theGame->GetGameState()->digital_master_volume = 100;
-    _theGame->GetGameState()->screen_flipped=0;
-    _theGame->GetGameState()->offsets_locked=0;
-    _theGame->GetGameState()->cant_skip_speech = user_to_internal_skip_speech(game.options[OPT_NOSKIPTEXT]);
-    _theGame->GetGameState()->sound_volume = 255;
-    _theGame->GetGameState()->speech_volume = 255;
-    _theGame->GetGameState()->normal_font = 0;
-    _theGame->GetGameState()->speech_font = 1;
-    _theGame->GetGameState()->speech_text_shadow = 16;
-    _theGame->GetGameState()->screen_tint = -1;
-    _theGame->GetGameState()->bad_parsed_word[0] = 0;
-    _theGame->GetGameState()->swap_portrait_side = 0;
-    _theGame->GetGameState()->swap_portrait_lastchar = -1;
-    _theGame->GetGameState()->in_conversation = 0;
-    _theGame->GetGameState()->skip_display = 3;
-    _theGame->GetGameState()->no_multiloop_repeat = 0;
-    _theGame->GetGameState()->in_cutscene = 0;
-    _theGame->GetGameState()->fast_forward = 0;
-    _theGame->GetGameState()->totalscore = game.totalscore;
-    _theGame->GetGameState()->roomscript_finished = 0;
-    _theGame->GetGameState()->no_textbg_when_voice = 0;
-    _theGame->GetGameState()->max_dialogoption_width = get_fixed_pixel_size(180);
-    _theGame->GetGameState()->no_hicolor_fadein = 0;
-    _theGame->GetGameState()->bgspeech_game_speed = 0;
-    _theGame->GetGameState()->bgspeech_stay_on_display = 0;
-    _theGame->GetGameState()->unfactor_speech_from_textlength = 0;
-    _theGame->GetGameState()->mp3_loop_before_end = 70;
-    _theGame->GetGameState()->speech_music_drop = 60;
-    _theGame->GetGameState()->room_changes = 0;
-    _theGame->GetGameState()->check_interaction_only = 0;
-    _theGame->GetGameState()->replay_hotkey = 318;  // Alt+R
-    _theGame->GetGameState()->dialog_options_x = 0;
-    _theGame->GetGameState()->dialog_options_y = 0;
-    _theGame->GetGameState()->min_dialogoption_width = 0;
-    _theGame->GetGameState()->disable_dialog_parser = 0;
-    _theGame->GetGameState()->ambient_sounds_persist = 0;
-    _theGame->GetGameState()->screen_is_faded_out = 0;
-    _theGame->GetGameState()->player_on_region = 0;
-    _theGame->GetGameState()->top_bar_backcolor = 8;
-    _theGame->GetGameState()->top_bar_textcolor = 16;
-    _theGame->GetGameState()->top_bar_bordercolor = 8;
-    _theGame->GetGameState()->top_bar_borderwidth = 1;
-    _theGame->GetGameState()->top_bar_ypos = 25;
-    _theGame->GetGameState()->top_bar_font = -1;
-    _theGame->GetGameState()->screenshot_width = 160;
-    _theGame->GetGameState()->screenshot_height = 100;
-    _theGame->GetGameState()->speech_text_align = SCALIGN_CENTRE;
-    _theGame->GetGameState()->auto_use_walkto_points = 1;
-    _theGame->GetGameState()->inventory_greys_out = 0;
-    _theGame->GetGameState()->skip_speech_specific_key = 0;
-    _theGame->GetGameState()->abort_key = 324;  // Alt+X
-    _theGame->GetGameState()->fade_to_red = 0;
-    _theGame->GetGameState()->fade_to_green = 0;
-    _theGame->GetGameState()->fade_to_blue = 0;
-    _theGame->GetGameState()->show_single_dialog_option = 0;
-    _theGame->GetGameState()->keep_screen_during_instant_transition = 0;
-    _theGame->GetGameState()->read_dialog_option_colour = -1;
-    _theGame->GetGameState()->narrator_speech = game.playercharacter;
-    _theGame->GetGameState()->crossfading_out_channel = 0;
-    _theGame->GetGameState()->speech_textwindow_gui = game.options[OPT_TWCUSTOM];
-    if (_theGame->GetGameState()->speech_textwindow_gui == 0)
-        _theGame->GetGameState()->speech_textwindow_gui = -1;
-    strcpy(_theGame->GetGameState()->game_name, game.gamename);
-    _theGame->GetGameState()->lastParserEntry[0] = 0;
-    _theGame->GetGameState()->follow_change_room_timer = 150;
+    _theGame->GetGameState().speech_bubble_width = get_fixed_pixel_size(100);
+    _theGame->GetGameState().bg_frame=0;
+    _theGame->GetGameState().bg_frame_locked=0;
+    _theGame->GetGameState().bg_anim_delay=0;
+    _theGame->GetGameState().anim_background_speed = 0;
+    _theGame->GetGameState().silent_midi = 0;
+    _theGame->GetGameState().current_music_repeating = 0;
+    _theGame->GetGameState().skip_until_char_stops = -1;
+    _theGame->GetGameState().get_loc_name_last_time = -1;
+    _theGame->GetGameState().get_loc_name_save_cursor = -1;
+    _theGame->GetGameState().restore_cursor_mode_to = -1;
+    _theGame->GetGameState().restore_cursor_image_to = -1;
+    _theGame->GetGameState().ground_level_areas_disabled = 0;
+    _theGame->GetGameState().next_screen_transition = -1;
+    _theGame->GetGameState().temporarily_turned_off_character = -1;
+    _theGame->GetGameState().inv_backwards_compatibility = 0;
+    _theGame->GetGameState().gamma_adjustment = 100;
+    _theGame->GetGameState().num_do_once_tokens = 0;
+    _theGame->GetGameState().do_once_tokens = NULL;
+    _theGame->GetGameState().music_queue_size = 0;
+    _theGame->GetGameState().shakesc_length = 0;
+    _theGame->GetGameState().wait_counter=0;
+    _theGame->GetGameState().key_skip_wait = 0;
+    _theGame->GetGameState().cur_music_number=-1;
+    _theGame->GetGameState().music_repeat=1;
+    _theGame->GetGameState().music_master_volume=160;
+    _theGame->GetGameState().digital_master_volume = 100;
+    _theGame->GetGameState().screen_flipped=0;
+    _theGame->GetGameState().offsets_locked=0;
+    _theGame->GetGameState().cant_skip_speech = user_to_internal_skip_speech(game.options[OPT_NOSKIPTEXT]);
+    _theGame->GetGameState().sound_volume = 255;
+    _theGame->GetGameState().speech_volume = 255;
+    _theGame->GetGameState().normal_font = 0;
+    _theGame->GetGameState().speech_font = 1;
+    _theGame->GetGameState().speech_text_shadow = 16;
+    _theGame->GetGameState().screen_tint = -1;
+    _theGame->GetGameState().bad_parsed_word[0] = 0;
+    _theGame->GetGameState().swap_portrait_side = 0;
+    _theGame->GetGameState().swap_portrait_lastchar = -1;
+    _theGame->GetGameState().in_conversation = 0;
+    _theGame->GetGameState().skip_display = 3;
+    _theGame->GetGameState().no_multiloop_repeat = 0;
+    _theGame->GetGameState().in_cutscene = 0;
+    _theGame->GetGameState().fast_forward = 0;
+    _theGame->GetGameState().totalscore = game.totalscore;
+    _theGame->GetGameState().roomscript_finished = 0;
+    _theGame->GetGameState().no_textbg_when_voice = 0;
+    _theGame->GetGameState().max_dialogoption_width = get_fixed_pixel_size(180);
+    _theGame->GetGameState().no_hicolor_fadein = 0;
+    _theGame->GetGameState().bgspeech_game_speed = 0;
+    _theGame->GetGameState().bgspeech_stay_on_display = 0;
+    _theGame->GetGameState().unfactor_speech_from_textlength = 0;
+    _theGame->GetGameState().mp3_loop_before_end = 70;
+    _theGame->GetGameState().speech_music_drop = 60;
+    _theGame->GetGameState().room_changes = 0;
+    _theGame->GetGameState().check_interaction_only = 0;
+    _theGame->GetGameState().replay_hotkey = 318;  // Alt+R
+    _theGame->GetGameState().dialog_options_x = 0;
+    _theGame->GetGameState().dialog_options_y = 0;
+    _theGame->GetGameState().min_dialogoption_width = 0;
+    _theGame->GetGameState().disable_dialog_parser = 0;
+    _theGame->GetGameState().ambient_sounds_persist = 0;
+    _theGame->GetGameState().screen_is_faded_out = 0;
+    _theGame->GetGameState().player_on_region = 0;
+    _theGame->GetGameState().top_bar_backcolor = 8;
+    _theGame->GetGameState().top_bar_textcolor = 16;
+    _theGame->GetGameState().top_bar_bordercolor = 8;
+    _theGame->GetGameState().top_bar_borderwidth = 1;
+    _theGame->GetGameState().top_bar_ypos = 25;
+    _theGame->GetGameState().top_bar_font = -1;
+    _theGame->GetGameState().screenshot_width = 160;
+    _theGame->GetGameState().screenshot_height = 100;
+    _theGame->GetGameState().speech_text_align = SCALIGN_CENTRE;
+    _theGame->GetGameState().auto_use_walkto_points = 1;
+    _theGame->GetGameState().inventory_greys_out = 0;
+    _theGame->GetGameState().skip_speech_specific_key = 0;
+    _theGame->GetGameState().abort_key = 324;  // Alt+X
+    _theGame->GetGameState().fade_to_red = 0;
+    _theGame->GetGameState().fade_to_green = 0;
+    _theGame->GetGameState().fade_to_blue = 0;
+    _theGame->GetGameState().show_single_dialog_option = 0;
+    _theGame->GetGameState().keep_screen_during_instant_transition = 0;
+    _theGame->GetGameState().read_dialog_option_colour = -1;
+    _theGame->GetGameState().narrator_speech = game.playercharacter;
+    _theGame->GetGameState().crossfading_out_channel = 0;
+    _theGame->GetGameState().speech_textwindow_gui = game.options[OPT_TWCUSTOM];
+    if (_theGame->GetGameState().speech_textwindow_gui == 0)
+        _theGame->GetGameState().speech_textwindow_gui = -1;
+    strcpy(_theGame->GetGameState().game_name, game.gamename);
+    _theGame->GetGameState().lastParserEntry[0] = 0;
+    _theGame->GetGameState().follow_change_room_timer = 150;
     for (ee = 0; ee < MAX_BSCENE; ee++) 
-        _theGame->GetGameState()->raw_modified[ee] = 0;
-    _theGame->GetGameState()->game_speed_modifier = 0;
+        _theGame->GetGameState().raw_modified[ee] = 0;
+    _theGame->GetGameState().game_speed_modifier = 0;
     if (_theSetup->DebugFlags & DBG_DEBUGMODE)
-        _theGame->GetGameState()->debug_mode = 1;
+        _theGame->GetGameState().debug_mode = 1;
     gui_disabled_style = convert_gui_disabled_style(game.options[OPT_DISABLEOFF]);
 
-    memset(&_theGame->GetGameState()->walkable_areas_on[0],1,MAX_WALK_AREAS+1);
-    memset(&_theGame->GetGameState()->script_timers[0],0,MAX_TIMERS * sizeof(int));
-    memset(&_theGame->GetGameState()->default_audio_type_volumes[0], -1, MAX_AUDIO_TYPES * sizeof(int));
+    memset(&_theGame->GetGameState().walkable_areas_on[0],1,MAX_WALK_AREAS+1);
+    memset(&_theGame->GetGameState().script_timers[0],0,MAX_TIMERS * sizeof(int));
+    memset(&_theGame->GetGameState().default_audio_type_volumes[0], -1, MAX_AUDIO_TYPES * sizeof(int));
 
     // reset graphical script vars (they're still used by some games)
     for (ee = 0; ee < MAXGLOBALVARS; ee++) 
-        _theGame->GetGameState()->globalvars[ee] = 0;
+        _theGame->GetGameState().globalvars[ee] = 0;
 
     for (ee = 0; ee < MAXGLOBALSTRINGS; ee++)
-        _theGame->GetGameState()->globalstrings[ee][0] = 0;
+        _theGame->GetGameState().globalstrings[ee][0] = 0;
 
     for (ee = 0; ee < MAX_SOUND_CHANNELS; ee++)
         last_sound_played[ee] = -1;

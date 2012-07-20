@@ -25,7 +25,8 @@ struct CErrorHandle
     void *err;
 
     // Safe check
-    inline bool IsNil() { return this == NULL; }
+    inline bool IsNil() const { return this == NULL; }
+    inline int GetErrorCodeOrSomething() const { return -1; }
 };
 
 namespace Err

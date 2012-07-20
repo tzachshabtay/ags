@@ -297,17 +297,7 @@ void main_set_gamedir(int argc,char*argv[])
 }
 */
 
-#if defined(WINDOWS_VERSION)
-#include <new.h>
-char tempmsg[100];
-char*printfworkingspace;
-int malloc_fail_handler(size_t amountwanted) {
-  free(printfworkingspace);
-  sprintf(tempmsg,"Out of memory: failed to allocate %ld bytes (at PP=%d)",amountwanted, our_eip);
-  quit(tempmsg);
-  return 0;
-}
-#endif
+
 
 #include "Common/core/err.h"
 #include "Common/core/out.h"
@@ -325,7 +315,19 @@ int main(int argc,char*argv[])
 {    
     HErr err;
 
-    // Create the Platform Driver
+    //-----------------------------------------------------
+    // 1. Parse and store the command line arguments
+    //
+    CCmdArgs cmd_args;
+    err = cmd_args.ParseCmdLine(argc, argv);
+    if (!err->IsNil())
+    {
+        return 0; // TODO proper error code here
+    }
+
+    //-----------------------------------------------------
+    // 2. Create the Platform Driver
+    // 
     // TODO: use global var for now, but change to local var later
     /*AGSPlatformDriver **/platform = AGSPlatformDriver::GetDriver();
     if (!platform)
@@ -333,93 +335,32 @@ int main(int argc,char*argv[])
         return 0; // TODO proper error code here
     }
 
-    // Create the Engine
+    //-----------------------------------------------------
+    // 3. Create the Engine
+    // 
     err = CAGSEngine::CreateInstance();
     if (!err->IsNil())
     {
         return 0; // TODO proper error code here
     }
 
+    //-----------------------------------------------------
+    // 4. Run the Engine
+    // 
     CAGSEngine *the_engine = CAGSEngine::GetInstance();
-    the_engine->SetEIP(-999);
-    cfopenpriority=2; // Clib32
-    the_engine->GetGame()->Initialize(); // perhaps move to Engine::StartUp
+    err = the_engine->StartUpAndRun(cmd_args);
 
-    //main_init();
-
-    CCmdArgs cmd_args;
-    err = cmd_args.ParseCmdLine(argc, argv);
-    if (!err->IsNil())
+    //-----------------------------------------------------
+    // 5. Program end
+    // 
+    if (err->IsNil())
     {
-        return 9; // TODO proper error code here
-    }
-    
-    //res = main_preprocess_cmdline(argc, argv);
-    //if (res != RETURN_CONTINUE) {
-    //    return res;
-    //}
-
-    // [IKM] For some bizzare reason this function is a part of routefnd module;
-    // I cannot just move it here, because it references certain variables from
-    // that module and so probably somehow related to it, in a logical or maybe
-    // philosophical way, I just cannot figure out what at the time being.
-    print_welcome_text(AC_VERSION_TEXT,ACI_VERSION_TEXT);
-    if ((argc>1) && (argv[1][1]=='?'))
         return 0;
-
-    Out::Notify("***** ENGINE STARTUP");
-
-#if defined(WINDOWS_VERSION)
-    _set_new_handler(malloc_fail_handler);
-    _set_new_mode(1);
-    printfworkingspace=(char*)malloc(7000);
-#endif
-
-
-
-    err = the_engine->Initialize(cmd_args);
-    if (!err->IsNil())
-    {
-        return 0; // TODO proper error code here
-    }
-
-
-
-    //debug_flags=0;
-
-    //res = main_process_cmdline(argc, argv);
-    //if (res != RETURN_CONTINUE) {
-    //    return res;
-    //}
-
-    // not used anyway
-    //main_init_crt_report();
-
-    //main_set_gamedir(argc, argv);    
-
-    // Update shell associations and exit
-    // [IKM] Will leave as this for now
-    if (/*debug_flags*/
-        the_engine->GetSetup()->DebugFlags & DBG_REGONLY)
-    {
-        exit(0);
-    }
-
-#ifndef USE_CUSTOM_EXCEPTION_HANDLER
-    the_engine->GetSetup()->DisableExceptionHandling = 1;
-#endif
-
-    if (the_engine->GetSetup()->DisableExceptionHandling)
-    {
-        err = the_engine->StartUp();
-        platform->PostAllegroExit();
     }
     else
     {
-        err = the_engine->StartUpWithExceptionHandling();
+        return err->GetErrorCodeOrSomething();
     }
-
-    return 0; // TODO proper error code here
 }
 
 #if defined(WINDOWS_VERSION) || defined(LINUX_VERSION) || defined(MAC_VERSION)

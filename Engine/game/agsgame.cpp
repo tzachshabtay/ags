@@ -16,9 +16,9 @@ CAGSGame::~CAGSGame()
 {
 }
 
-/*const*/ GameState *CAGSGame::GetGameState() /*const*/
+/*const*/ GameState &CAGSGame::GetGameState() /*const*/
 {
-    return &_play;
+    return _play;
 }
 
 void CAGSGame::Initialize()
