@@ -1089,6 +1089,30 @@
 				Name="device"
 				>
 				<File
+					RelativePath="..\..\Engine\device\allegro_keyboard.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\device\allegro_mouse.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\device\allegro_screen.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\device\device_keyboard.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\device\device_mouse.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\device\device_screen.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Engine\device\mousew32.cpp"
 					>
 				</File>
@@ -1105,6 +1129,10 @@
 				Name="core"
 				>
 				<File
+					RelativePath="..\..\Engine\core\_system.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Engine\core\agsengine.cpp"
 					>
 				</File>
@@ -1118,6 +1146,10 @@
 				>
 				<File
 					RelativePath="..\..\Engine\game\agsgame.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\game\assets_manager.cpp"
 					>
 				</File>
 			</Filter>
@@ -2019,11 +2051,19 @@
 				Name="core"
 				>
 				<File
+					RelativePath="..\..\Engine\core\_system.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Engine\core\agsengine.h"
 					>
 				</File>
 				<File
 					RelativePath="..\..\Engine\core\engine_setup.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\core\system_device.h"
 					>
 				</File>
 			</Filter>
@@ -2046,10 +2086,38 @@
 					RelativePath="..\..\Engine\game\agsgame.h"
 					>
 				</File>
+				<File
+					RelativePath="..\..\Engine\game\assets_manager.h"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="device"
 				>
+				<File
+					RelativePath="..\..\Engine\device\allegro_keyboard.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\device\allegro_mouse.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\device\allegro_screen.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\device\device_keyboard.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\device\device_mouse.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\device\device_screen.h"
+					>
+				</File>
 				<File
 					RelativePath="..\..\Engine\device\mousew32.h"
 					>

@@ -27,6 +27,13 @@ class CKeyValueTree;
 
 namespace Engine
 {
+
+// Forward declarations
+namespace Util
+{
+struct CCmdArgs;
+} // namespace Util
+
 namespace Core
 {
 
@@ -34,6 +41,7 @@ namespace Core
 using AGS::Common::Core::HErr;
 using AGS::Common::Util::CString;
 using AGS::Common::Util::CStream;
+using AGS::Engine::Util::CCmdArgs;
 
 // [IKM] 2012-07-09: I put all the contents of original GameSetup structure here;
 // althought *probably* some of these values should be later moved to some kind
@@ -66,15 +74,18 @@ public:
     int32_t ForceLetterbox;
     CString ReplayFile;
     int     DebugFlags;
+    bool    MustChangeToGameDataDirectory;
 
     CEngineSetup();
     void SetDefaults();
+    void OverrideByCmdArgs(const CCmdArgs &cmd_args);
+    void OverrideByPlatform();
     // Read and write binary data
     HErr Read (CStream *in);
     HErr Write(CStream *out);
     // Read and write from/to key-value structure
-    HErr ReadCFG (Common::Util::CKeyValueTree *tree);
-    HErr WriteCFG(Common::Util::CKeyValueTree *tree);
+    HErr ReadFromTree (Common::Util::CKeyValueTree *tree);
+    HErr WriteToTree(Common::Util::CKeyValueTree *tree);
 };
 
 } // namespace Core

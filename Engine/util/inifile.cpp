@@ -29,11 +29,6 @@ HErr CINIFile::WriteAsTree  (CStream *out) const
     return Err::Nil();
 }
 
-CINIFile *CINIFile::Open(const CString &file_name, const CString &mode)
-{
-    return new CINIFile(); // 0_o
-}
-
 // [IKM] some stuff from original AGS
 // Replace the filename part of complete path WASGV with INIFIL
 void CINIFile::getdirec(const CString &inifil, CString *wasgv)

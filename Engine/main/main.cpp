@@ -325,6 +325,14 @@ int main(int argc,char*argv[])
         return 0; // TODO proper error code here
     }
 
+    // Update shell associations and exit
+    if (/*debug_flags*/
+        //_theSetup->DebugFlags & DBG_REGONLY)
+        cmd_args.ContainsArgKey("-updatereg"))
+    {
+        exit(0);
+    }
+
     //-----------------------------------------------------
     // 2. Create the Platform Driver
     // 

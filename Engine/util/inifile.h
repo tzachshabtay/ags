@@ -40,8 +40,6 @@ public:
     CINIFile();
     virtual ~CINIFile();
 
-    static CINIFile *Open(const CString &file_name, const CString &mode);
-
     // [IKM] some stuff from original AGS
     // Replace the filename part of complete path WASGV with INIFIL
     static void getdirec(const CString &inifil, CString *wasgv);

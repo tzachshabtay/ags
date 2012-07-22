@@ -22,18 +22,30 @@ struct AGSPlatformDriver;
 
 namespace AGS
 {
+
+// Forward declarations
+namespace Common
+{
+namespace Util
+{
+class CKeyValueTree;
+} // namespace Util
+} // namespace Common
+
 namespace Engine
 {
 
 // Forward declarations
 namespace Game
 {
+class CAssetsManager;
 class CAGSGame;
-}
+} // namespace Game
 namespace Util
 {
 class CCmdArgs;
-}
+class CINIFile;
+} // namespace Util
 
 //-----------------------------------------------------------------------------
 
@@ -42,12 +54,16 @@ namespace Core
 
 // Forward declarations
 struct CEngineSetup;
+class CSystem;
 
 // Using-declarations
 using AGS::Common::Core::HErr;
+using AGS::Common::Util::CKeyValueTree;
 using AGS::Common::Util::CString;
+using AGS::Engine::Game::CAssetsManager;
 using AGS::Engine::Game::CAGSGame;
 using AGS::Engine::Util::CCmdArgs;
+using AGS::Engine::Util::CINIFile;
 
 //-----------------------------------------------------------------------------
 
@@ -68,8 +84,8 @@ public:
     int32_t         GetEIP() const;
     const CCmdArgs  &GetCmdArgs() const;
 
-    CEngineSetup   *GetSetup() const;
-    CAGSGame       *GetGame() const;
+    const CEngineSetup &GetSetup() const;
+    CAGSGame        *GetGame() const;
 
     // There are three ways of running the Engine:
     // first is to call StartUpAndRun() and let it handle the rest;
@@ -100,16 +116,16 @@ protected:
     void            OnException();
 #endif
 
-    HErr ProcessCmdLine();
-    HErr ReadConfigFile();
+    HErr ProcessCmdArgs();
+    bool CheckMemory();
+    HErr ReadConfigFile(CINIFile *ini_file);
+    HErr ConfigureEngine(CKeyValueTree *kv_tree);
     HErr InitAllegro();
     HErr InitWindow();
-    bool SetGameDataFileName();
-    HErr InitGameDataFile();
-    int  InitGameDataExternal(); // returns clib's errcode
-    HErr InitGameDataInternal();
-    
     HErr RunSetup();
+    HErr CreateComponents();
+    HErr CreateFontRenderers();
+    HErr CreateGame();
 
     static int  MallocFailHandler(size_t amountwanted);
     static void AllegroExitHandler();
@@ -172,9 +188,6 @@ protected:
 private:
     CAGSEngine();
 
-    // Platform-specific override
-    void    OverrideSetup();
-
     // The only instance of the AGS Engine
     static CAGSEngine   *_theEngine;
     AGSPlatformDriver   *_platform;
@@ -186,20 +199,23 @@ private:
     CCmdArgs            _cmdArgs;
     CString             _appExeName;
     CString             _appDirectory;
-    CString             _gameDataFileName;
-    CString             _gameDataDirectory;
-    CEngineSetup        *_theSetup;
+    CEngineSetup        &_theSetup;
     CString             _configFileDefName;
     CString             _configFileName;
     bool                _ignoreConfigFile;
-    bool                _mustChangeToGameDataDirectory;
-
+    int                 _dataFileArgV;
     bool                _mustRunSetup;
+    int                 _overrideStartRoom;
+    char                *_loadSaveGameOnStartup;
+    bool                _updateMP3ThreadRunning;
 
-    HWND                _hAllegroWnd;
+    HWND                &_hAllegroWnd;
     int                 _AllegroErrNo;
 
+    CAssetsManager      *_theAssetsMgr;
+    CSystem             *_theSystem;
     CAGSGame            *_theGame;
+
     bool                _properExit;
     bool                _wantExit;
     bool                _abortEngine;

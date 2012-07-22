@@ -1,6 +1,8 @@
 
 #include "Common/core/err.h"
 #include "Engine/core/engine_setup.h"
+#include "Engine/util/cmdargs.h"
+#include "debug/agseditordebugger.h"
 #include "util/wgt2allg.h"
 #include "ac/spritecache.h"
 #include "ac/gamestate.h"
@@ -26,6 +28,52 @@ CEngineSetup::CEngineSetup()
 
 void CEngineSetup::SetDefaults()
 {
+    DataFilesDir = ".";
+    Translation = NULL;
+    MainDataFilename = "ac2game.dat";
+#ifdef WINDOWS_VERSION
+    Digicard = DIGI_DIRECTAMX(0);
+#endif
+    GfxDriverID = "DX5";
+}
+
+void CEngineSetup::OverrideByCmdArgs(const CCmdArgs &cmd_args)
+{
+    int force_window        = 0;
+
+    //
+    // Parse order independent options
+    //
+    if (cmd_args.ContainsArgKey("-shelllaunch"))         MustChangeToGameDataDirectory = true;
+    if (cmd_args.ContainsArgKey("--test"))               DebugFlags|=DBG_DEBUGMODE;
+    if (cmd_args.ContainsArgKey("-noiface"))             DebugFlags|=DBG_NOIFACE;
+    if (cmd_args.ContainsArgKey("-nosprdisp"))           DebugFlags|=DBG_NODRAWSPRITES;
+    if (cmd_args.ContainsArgKey("-nospr"))               DebugFlags|=DBG_NOOBJECTS;
+    if (cmd_args.ContainsArgKey("-noupdate"))            DebugFlags|=DBG_NOUPDATE;
+    if (cmd_args.ContainsArgKey("-nosound"))             DebugFlags|=DBG_NOSFX;
+    if (cmd_args.ContainsArgKey("-nomusic"))             DebugFlags|=DBG_NOMUSIC;
+    if (cmd_args.ContainsArgKey("-noscript"))            DebugFlags|=DBG_NOSCRIPT;
+    if (cmd_args.ContainsArgKey("-novideo"))             DebugFlags|=DBG_NOVIDEO;
+    if (cmd_args.ContainsArgKey("-noexceptionhandler"))  DisableExceptionHandling = 1;
+    if (cmd_args.ContainsArgKey("-dbgscript"))           DebugFlags|=DBG_DBGSCRIPT;
+    if (cmd_args.ContainsArgKey("-windowed"))            force_window = 1;
+    if (cmd_args.ContainsArgKey("-fullscreen"))          force_window = 2;
+
+    // Force to run in a window, override the config file
+    if (force_window == 1)
+        Windowed = 1;
+    else if (force_window == 2)
+        Windowed = 0;
+}
+
+void CEngineSetup::OverrideByPlatform()
+{
+    // ???
+#ifdef SOME_OTHER_PLATFORM
+    GfxDriverID = "DX5";
+    EnableAntialiasing = 1;//psp_gfx_smooth_sprites;
+    Translation = "default";//psp_translation;
+#endif
 }
 
 HErr CEngineSetup::Read (CStream *in)
@@ -38,7 +86,7 @@ HErr CEngineSetup::Write(CStream *out)
     return Err::Nil();
 }
 
-HErr CEngineSetup::ReadCFG (CKeyValueTree *tree)
+HErr CEngineSetup::ReadFromTree (CKeyValueTree *tree)
 {
     CKeyValueTree *sound_tree = tree->CreateTree("sound");
 #ifndef WINDOWS_VERSION
@@ -160,7 +208,7 @@ HErr CEngineSetup::ReadCFG (CKeyValueTree *tree)
     return Err::Nil();
 }
 
-HErr CEngineSetup::WriteCFG(CKeyValueTree *tree)
+HErr CEngineSetup::WriteToTree(CKeyValueTree *tree)
 {
     return Err::Nil();
 }

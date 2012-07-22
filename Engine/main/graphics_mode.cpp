@@ -362,7 +362,7 @@ int init_gfx_mode(int wid,int hit,int cdep) {
         if (usetup.windowed > 2) usetup.windowed = 0;
         return init_gfx_mode(wid,hit,cdep);
     }
-    return working_gfx_mode_status;    
+    return working_gfx_mode_status;
 }
 
 int try_widescreen_bordered_graphics_mode_if_appropriate(int initasx, int initasy, int firstDepth)

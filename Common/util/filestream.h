@@ -22,6 +22,8 @@ struct AGS::Common::Util::CFile;
 struct CFileStream : public CStream
 {
     CFile *f;
+
+    static CFileStream *Open(const CString &file_name, const CString &mode) { return new CFileStream(); }
 };
 
 } // namespace Util

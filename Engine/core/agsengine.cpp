@@ -10,13 +10,19 @@
 #include "Common/core/out.h"
 #include "Common/util/string.h"
 #include "Common/util/file.h"
+#include "Common/util/filestream.h"
 #include "Common/util/path.h"
 #include "Common/util/wgt2allg.h"
+#include "Engine/ac/game.h"
 #include "Engine/ac/route_finder.h"
 #include "Engine/core/agsengine.h"
 #include "Engine/core/engine_setup.h"
+#include "Engine/core/_system.h"
 #include "Engine/debug/agseditordebugger.h"
 #include "Engine/game/agsgame.h"
+#include "Engine/game/assets_manager.h"
+#include "Engine/main/game_start.h"
+#include "Engine/main/graphics_mode.h"
 #include "Engine/util/inifile.h"
 #include "Engine/platform/base/agsplatformdriver.h"
 
@@ -45,22 +51,10 @@ extern EXCEPTION_RECORD excinfo;
 extern const char *get_cur_script(int numberOfLinesOfCallStack);
 // Somewhere from allegro
 extern int atexit(void (*pfn)());
-// This is from clib32
-extern "C" int csetlib(char *namm, char *passw);
-extern char *ci_find_file(char *dir_name, char *file_name);
 #endif // USE_CUSTOM_EXCEPTION_HANDLER
 
-// from clib32
-extern "C" int cfopenpriority;
-extern char *ci_find_file(char *dir_name, char *file_name);
-extern "C"
-{
-    extern int csetlib(char *namm, char *passw);
-    extern FILE *clibfopen(char *, char *);
-    extern long cliboffset(char *);
-    extern long clibfilesize(char *);
-    extern long last_opened_size;
-}
+// from allegro
+extern "C" HWND allegro_wnd;
 
 
 namespace AGS
@@ -77,6 +71,7 @@ namespace Out  = AGS::Common::Core::Out;
 // Using-declarations
 using AGS::Common::Core::CErrorHandle;
 using AGS::Common::Util::CFile;
+using AGS::Common::Util::CFileStream;
 using AGS::Engine::Util::CINIFile;
 namespace Err = AGS::Common::Core::Err;
 
@@ -85,7 +80,6 @@ CAGSEngine *CAGSEngine::_theEngine = NULL;
 CAGSEngine::~CAGSEngine()
 {
     if (_theGame)   delete _theGame;
-    if (_theSetup)  delete _theSetup;
 }
 
 HErr CAGSEngine::CreateInstance()
@@ -137,7 +131,7 @@ const CCmdArgs &CAGSEngine::GetCmdArgs() const
     return _cmdArgs;
 }
 
-CEngineSetup *CAGSEngine::GetSetup() const
+const CEngineSetup &CAGSEngine::GetSetup() const
 {
     return _theSetup;
 }
@@ -161,22 +155,29 @@ HErr CAGSEngine::StartUpAndRun(const CCmdArgs &cmdargs)
 
 HErr CAGSEngine::StartUp(const CCmdArgs &cmdargs)
 {
-    _cmdArgs = cmdargs;
-    _platform = AGSPlatformDriver::GetDriver();
+    //-----------------------------------------------------
+    // 1. Construct basic components.
+    //
+    _cmdArgs    = cmdargs;
+    _platform   = AGSPlatformDriver::GetDriver();
+    //// [IKM] FIXME: 
+    //// I don't really like this, game should be created only after system init;
+    //// but game data is set in ProcessCmdLine(); probably should be changed later
+    //_theGame    = new CAGSGame();
 
-    HErr err = ProcessCmdLine();
+    //-----------------------------------------------------
+    // Check command line arguments and make preliminary
+    // setup.
+    //
+    HErr err = ProcessCmdArgs();
     if (!err->IsNil())
     {
         return err;
     }
 
-    // Update shell associations and exit
-    if (/*debug_flags*/
-        _theSetup->DebugFlags & DBG_REGONLY)
-    {
-        exit(0); // [IKM] FIXME: this will cause grand memory leak, should we return Err::FromCode(0)?
-    }
-
+    //-----------------------------------------------------
+    // 2. Set up an out-of-memory handler.
+    //
 #if defined(WINDOWS_VERSION)
     _set_new_handler(MallocFailHandler);
     _set_new_mode(1);
@@ -184,11 +185,13 @@ HErr CAGSEngine::StartUp(const CCmdArgs &cmdargs)
     _emergencyWorkingSpace = (char*)malloc(7000);
 #endif
 
+    //-----------------------------------------------------
+    // 3. Run main start-up procedure
+    //
 #ifndef USE_CUSTOM_EXCEPTION_HANDLER
-    _theSetup->DisableExceptionHandling = 1;
+    _theSetup.DisableExceptionHandling = 1;
 #endif
-
-    if (_theSetup->DisableExceptionHandling)
+    if (_theSetup.DisableExceptionHandling)
     {
         err = _StartUp();
     }
@@ -203,7 +206,7 @@ HErr CAGSEngine::StartUp(const CCmdArgs &cmdargs)
 HErr CAGSEngine::RunLoop()
 {
     HErr err;
-    if (_theSetup->DisableExceptionHandling)
+    if (_theSetup.DisableExceptionHandling)
     {
         err = _RunLoop();
     }
@@ -218,7 +221,7 @@ HErr CAGSEngine::RunLoop()
 HErr CAGSEngine::Run()
 {
     HErr err;
-    if (_theSetup->DisableExceptionHandling)
+    if (_theSetup.DisableExceptionHandling)
     {
         err = _Run();
     }
@@ -234,9 +237,11 @@ HErr CAGSEngine::_StartUp()
 {
     HErr err;
 
+    //-----------------------------------------------------
+    // 4. Basic initialization
+    //
     SetEIP(-999);
-    cfopenpriority=2; // Clib32
-    _theGame->Initialize(); // perhaps move to Engine::StartUp
+    //_theGame->Initialize(); // FIXME: move down
 
     // [IKM] For some bizzare reason this function is a part of routefnd module;
     // I cannot just move it here, because it references certain variables from
@@ -250,10 +255,37 @@ HErr CAGSEngine::_StartUp()
         return 0;
     */
 
+    if (!CheckMemory())
+    {
+        return Err::FromCode(EXIT_NORMAL);
+    }
+
     Out::Notify("***** ENGINE STARTUP");
 
-    ReadConfigFile();
+    //-----------------------------------------------------
+    // 5. Configure Engine work
+    //
+    CINIFile ini;
+    // Don't read in the standard config file if disabled,
+    if (!_ignoreConfigFile)
+    {
+        // Find and read configuration file, store the key-value pairs
+        err = ReadConfigFile(&ini);
+    }
+    if (!err->IsNil())
+    {
+        return err;
+    }
 
+    err = ConfigureEngine(&ini);
+    if (!err->IsNil())
+    {
+        return err;
+    }
+
+    //-----------------------------------------------------
+    // 6. Init Allegro and create application window
+    //
     err = InitAllegro();
     if (!err->IsNil())
     {
@@ -266,8 +298,10 @@ HErr CAGSEngine::_StartUp()
         return err;
     }
 
+    //-----------------------------------------------------
+    // 7. Run setup if must
+    //
     SetEIP(-196);
-
     if (_mustRunSetup)
     {
         err = RunSetup();
@@ -277,173 +311,39 @@ HErr CAGSEngine::_StartUp()
         }
     }
 
+    //-----------------------------------------------------
+
+    if ((_theSetup.DebugFlags & (~DBG_DEBUGMODE)) >0) {
+        _platform->DisplayAlert("Engine debugging enabled.\n"
+            "\nNOTE: You have selected to enable one or more engine debugging options.\n"
+            "These options cause many parts of the game to behave abnormally, and you\n"
+            "may not see the game as you are used to it. The point is to test whether\n"
+            "the engine passes a point where it is crashing on you normally.\n"
+            "[Debug flags enabled: 0x%02X]\n"
+            "Press a key to continue.\n",_theSetup.DebugFlags);
+    }
+
     SetEIP(-195);
 
-    err = InitGameDataFile();
-    if (!err->IsNil()) {
+    //-----------------------------------------------------
+    // 8. Create Engine components
+    //
+    err = CreateComponents();
+    if (!err->IsNil())
+    {
+        return err;
+    }
+    
+    //-----------------------------------------------------
+    // 9. Create and prepare game
+    //
+    err = CreateGame();
+    if (!err->IsNil())
+    {
         return err;
     }
 
-    SetEIP(-192);
-
-    Out::Notify("Initializing TTF renderer");
-    init_font_renderer(); // in common/ac_fonts
-
-    SetEIP(-188);
-
-    return err;
-
-
-#ifdef ______NOT_NOW
-
-    
-    res = engine_init_mouse();
-	if (res != RETURN_CONTINUE) {
-        return res;
-    }
-
-    SetEIP(-187);
-    
-
-    res = engine_check_memory();
-    if (res != RETURN_CONTINUE) {
-        return res;
-    }
-
-    engine_init_rooms();
-
-    SetEIP(-186);
-    
-    res = engine_init_speech();
-    if (res != RETURN_CONTINUE) {
-        return res;
-    }
-
-    SetEIP(-185);
-    
-    res = engine_init_music();
-    if (res != RETURN_CONTINUE) {
-        return res;
-    }
-
-    SetEIP(-184);
-
-    engine_init_keyboard();
-
-    SetEIP(-183);
-
-    engine_init_timer();
-
-    SetEIP(-182);
-
-    engine_init_sound();
-
-    engine_init_debug();
-
-    SetEIP(-10);
-
-    engine_init_exit_handler();
-
-    // [IKM] I seriously don't get it why do we need to delete warnings.log
-    // in the middle of procedure; some warnings may have already being
-    // written there at this point, no?
-    unlink("warnings.log");
-
-    engine_init_rand();
-
-    engine_init_pathfinder();
-
-    engine_pre_init_gfx();
-
-    LOCK_VARIABLE(timerloop);
-    LOCK_FUNCTION(dj_timer_handler);
-    set_game_speed(40);
-
-    our_eip=-20;
-    //thisroom.allocall();
-    our_eip=-19;
-    //setup_sierra_interface();   // take this out later
-
-    res = engine_load_game_data();
-    if (res != RETURN_CONTINUE) {
-        return res;
-    }
-    
-    res = engine_check_register_game();
-    if (res != RETURN_CONTINUE) {
-        return res;
-    }
-
-    engine_init_title();
-
-    SetEIP(-189);
-
-    engine_init_directories();
-
-    SetEIP(-178);
-
-    res = engine_check_disk_space();
-    if (res != RETURN_CONTINUE) {
-        return res;
-    }
-
-    // [IKM] I do not really understand why is this checked only now;
-    // should not it be checked right after fonts initialization?
-    res = engine_check_fonts();
-    if (res != RETURN_CONTINUE) {
-        return res;
-    }
-
-    SetEIP(-179);
-
-    engine_init_modxm_player();
-
-    engine_init_screen_settings();
-
-    res = engine_init_gfx_filters();
-    if (res != RETURN_CONTINUE) {
-        return res;
-    }
-
-    engine_init_gfx_driver();
-
-    res = engine_init_graphics_mode();
-    if (res != RETURN_CONTINUE) {
-        return res;
-    }
-
-    engine_post_init_gfx_driver();
-
-    engine_prepare_screen();
-
-    _platform->PostAllegroInit((_theSetup->windowed > 0) ? true : false);
-
-    engine_set_gfx_driver_callbacks();
-
-    engine_set_color_conversions();
-
-    SetMultitasking(0);
-
-    engine_show_preload();
-
-    res = engine_init_sprites();
-    if (res != RETURN_CONTINUE) {
-        return res;
-    }
-
-    engine_setup_screen();
-
-    engine_init_game_settings();
-
-    engine_prepare_to_start_game();
-
-    initialize_start_and_play_game(override_start_room, loadSaveGameOnStartup);
-
-    update_mp3_thread_running = false;
-
-    quit("|bye!");
-#endif
-    return 0;
+    return Err::Nil();
 }
 
 HErr CAGSEngine::_RunLoop()
@@ -533,7 +433,7 @@ void CAGSEngine::OnException()
 }
 #endif
 
-HErr CAGSEngine::ProcessCmdLine()
+HErr CAGSEngine::ProcessCmdArgs()
 {
     int force_window        = 0;
     int force_letterbox     = 0;
@@ -554,10 +454,7 @@ HErr CAGSEngine::ProcessCmdLine()
     //
     // Parse order independent options
     //
-    if (_cmdArgs.ContainsArgKey("-shelllaunch"))         _mustChangeToGameDataDirectory = true;        
-    if (_cmdArgs.ContainsArgKey("-updatereg"))           _theSetup->DebugFlags |= DBG_REGONLY;        
-    if (_cmdArgs.ContainsArgKey("-windowed"))            force_window = 1;        
-    if (_cmdArgs.ContainsArgKey("-fullscreen"))          force_window = 2;
+    //if (_cmdArgs.ContainsArgKey("-updatereg"))           _theSetup.DebugFlags |= DBG_REGONLY;
     if (_cmdArgs.ContainsArgKey("-hicolor"))             force_16bit = 1;        
     if (_cmdArgs.ContainsArgKey("-letterbox"))           force_letterbox = 1;        
     if (_cmdArgs.ContainsArgKey("-record"))              _theGame->GetGameState().recording = 1;        
@@ -566,17 +463,7 @@ HErr CAGSEngine::ProcessCmdLine()
     if (_cmdArgs.ContainsArgKey("--15bit"))              debug_15bit_mode = 1;
     if (_cmdArgs.ContainsArgKey("--24bit"))              debug_24bit_mode = 1;
     if (_cmdArgs.ContainsArgKey("--fps"))                display_fps = 2;
-    if (_cmdArgs.ContainsArgKey("--test"))               _theSetup->DebugFlags|=DBG_DEBUGMODE;
-    if (_cmdArgs.ContainsArgKey("-noiface"))             _theSetup->DebugFlags|=DBG_NOIFACE;
-    if (_cmdArgs.ContainsArgKey("-nosprdisp"))           _theSetup->DebugFlags|=DBG_NODRAWSPRITES;
-    if (_cmdArgs.ContainsArgKey("-nospr"))               _theSetup->DebugFlags|=DBG_NOOBJECTS;
-    if (_cmdArgs.ContainsArgKey("-noupdate"))            _theSetup->DebugFlags|=DBG_NOUPDATE;
-    if (_cmdArgs.ContainsArgKey("-nosound"))             _theSetup->DebugFlags|=DBG_NOSFX;
-    if (_cmdArgs.ContainsArgKey("-nomusic"))             _theSetup->DebugFlags|=DBG_NOMUSIC;
-    if (_cmdArgs.ContainsArgKey("-noscript"))            _theSetup->DebugFlags|=DBG_NOSCRIPT;
-    if (_cmdArgs.ContainsArgKey("-novideo"))             _theSetup->DebugFlags|=DBG_NOVIDEO;
-    if (_cmdArgs.ContainsArgKey("-noexceptionhandler"))  _theSetup->DisableExceptionHandling = 1;
-    if (_cmdArgs.ContainsArgKey("-dbgscript"))           _theSetup->DebugFlags|=DBG_DBGSCRIPT;
+    
     if (_cmdArgs.ContainsArgKey("-registergame"))        just_register_game = true;
     if (_cmdArgs.ContainsArgKey("-unregistergame"))      just_unregister_game = true;    
 
@@ -585,7 +472,7 @@ HErr CAGSEngine::ProcessCmdLine()
     //
     _appExeName = _cmdArgs[0];
 
-    int datafile_argv = 0;
+    int _dataFileArgV = 0;
     for (int i = 1; i < _cmdArgs.GetCount(); ++i) {
         if (_cmdArgs[i][1]=='?') return 0;
 #ifdef _DEBUG
@@ -619,14 +506,8 @@ HErr CAGSEngine::ProcessCmdLine()
             _theGame->GetGameState().takeover_from[49] = 0;
             i += 2;
         }
-        else if (_cmdArgs[i][0]!='-') datafile_argv=i;
+        else if (_cmdArgs[i][0]!='-') _dataFileArgV=i;
     }
-
-    // Force to run in a window, override the config file
-    if (force_window == 1)
-        _theSetup->Windowed = 1;
-    else if (force_window == 2)
-        _theSetup->Windowed = 0;
 
     if ((!load_savegame_onstartup.IsEmpty()) && (!_cmdArgs[0].IsEmpty()))
     {
@@ -638,19 +519,39 @@ HErr CAGSEngine::ProcessCmdLine()
     _appDirectory = Path::GetCurrentDirectory();
 
     //if (change_to_game_dir == 1)  {
-    if (datafile_argv > 0) {
+    if (_dataFileArgV > 0) {
         // If launched by double-clicking .AGS file, change to that
         // folder; else change to this exe's folder
-        Path::SetCurrentDirectory(Path::GetParentPath(_cmdArgs[datafile_argv]));        
+        Path::SetCurrentDirectory(Path::GetParentPath(_cmdArgs[_dataFileArgV]));        
     }
 
-    _gameDataFileName = _cmdArgs[datafile_argv];
-    _gameDataDirectory = Path::GetCurrentDirectory();
+    //_gameDataFileName = _cmdArgs[datafile_argv];
+    //_gameDataDirectory = Path::GetCurrentDirectory();
 
     return Err::Nil();
 }
 
-HErr CAGSEngine::ReadConfigFile() {
+bool CAGSEngine::CheckMemory()
+{
+    Out::Notify("Checking memory");
+
+    char*memcheck=(char*)malloc(4000000);
+    if (memcheck==NULL) {
+        _platform->DisplayAlert("There is not enough memory available to run this game. You need 4 Mb free\n"
+            "extended memory to run the game.\n"
+            "If you are running from Windows, check the 'DPMI memory' setting on the DOS box\n"
+            "properties.\n");
+        return false;
+    }
+    free(memcheck);
+    // TODO:
+    //
+    //unlink (replayTempFile);
+    //
+    return true;
+}
+
+HErr CAGSEngine::ReadConfigFile(CINIFile *ini_file) {
 
     Out::Notify("Reading config file");
     SetEIP(-200);
@@ -663,7 +564,7 @@ HErr CAGSEngine::ReadConfigFile() {
     
     if (f == NULL) {
 
-        CString conf_file = _appExeName;        
+        CString conf_file = _appExeName;
         conf_file = Path::FixFileName(conf_file);
 
         CINIFile::getdirec(_configFileName, &conf_file);
@@ -679,31 +580,25 @@ HErr CAGSEngine::ReadConfigFile() {
         _configFileName = Path::FixFileName(_configFileName);
     }
 
-    // set default dir if no config file
-    _theSetup->DataFilesDir = ".";
-    _theSetup->Translation = NULL;
-    _theSetup->MainDataFilename = "ac2game.dat";
-#ifdef WINDOWS_VERSION
-    _theSetup->Digicard = DIGI_DIRECTAMX(0);
-#endif
-
-    // Don't read in the standard config file if disabled.
-    if (_ignoreConfigFile)
+    CFileStream *fs = CFileStream::Open(_configFileName, "r");
+    if (fs)
     {
-        OverrideSetup();
-        return Err::Nil();
+        ini_file->ReadAsTree(fs);
+        delete fs;
     }
 
-    CINIFile *ini_file = CINIFile::Open(_configFileName, "r");
+    return Err::Nil();
+}
 
-    if (ini_file != NULL) {
-        
-        _theSetup->ReadCFG(ini_file);
+HErr CAGSEngine::ConfigureEngine(CKeyValueTree *kv_tree)
+{
+    _theSetup.SetDefaults();
+    if (kv_tree)
+    {
+        _theSetup.ReadFromTree(kv_tree);
     }
-
-    if (_theSetup->GfxDriverID.IsEmpty())
-        _theSetup->GfxDriverID = "DX5";
-
+    _theSetup.OverrideByCmdArgs(_cmdArgs);
+    _theSetup.OverrideByPlatform();
     return Err::Nil();
 }
 
@@ -773,6 +668,174 @@ HErr CAGSEngine::RunSetup()
     return Err::Nil();
 }
 
+HErr CAGSEngine::CreateComponents()
+{
+    //-----------------------------------------------------
+    // Game Assets should be initialized first; if there's
+    // not game data found there's no sense in initializing
+    // other components.
+    //
+    _theAssetsMgr = new CAssetsManager(_theSetup, _cmdArgs[_dataFileArgV], Path::GetCurrentDirectory());
+    HErr err = _theAssetsMgr->RegisterGameData();
+    if (!err->IsNil()) {
+        return err;
+    }
+
+    _theSystem = new CSystem();
+    err = _theSystem->Initialize();
+    if (!err->IsNil()) {
+        return err;
+    }
+
+    // TODO!!
+    /*-------------------------------*/
+    engine_init_screen_settings();
+    int res = engine_init_graphics_mode();
+    if (res != RETURN_CONTINUE) {
+        return Err::FromCode(res);
+    }
+    engine_prepare_screen();
+    engine_setup_screen();
+    /*-------------------------------*/
+
+    err = CreateFontRenderers();
+    if (!err->IsNil()) {
+        return err;
+    }
+
+    SetEIP(-183);
+
+    Out::Notify("Install timer");
+    install_timer(); // allegro
+
+    SetEIP(-10);
+
+    Out::Notify("Install exit handler");
+    atexit(AllegroExitHandler); // allegro
+
+    Out::Notify("Initialize path finder library");
+    init_pathfinder(); // route_finder
+
+    SetEIP(-179);
+
+    engine_init_modxm_player(); //???
+
+    res = engine_init_gfx_filters();
+    if (res != RETURN_CONTINUE) {
+        return Err::FromCode(res);
+    }
+
+    engine_init_gfx_driver();
+    engine_post_init_gfx_driver();
+
+    _platform->PostAllegroInit((_theSetup.Windowed > 0) ? true : false);
+
+    engine_set_gfx_driver_callbacks();
+
+    engine_set_color_conversions();
+
+    _theSystem->GetScreen()->SetMultitasking(false);
+
+    return Err::Nil();
+}
+
+HErr CAGSEngine::CreateFontRenderers()
+{
+    SetEIP(-192);
+
+    Out::Notify("Initializing TTF renderer");
+    init_font_renderer(); // in common/ac_fonts
+
+    SetEIP(-188);
+
+    return Err::Nil();
+}
+
+HErr CAGSEngine::CreateGame()
+{
+    engine_init_rooms();
+
+    SetEIP(-186);
+
+    int res = engine_init_speech();
+    if (res != RETURN_CONTINUE) {
+        return Err::FromCode(res);
+    }
+
+    SetEIP(-185);
+
+    res = engine_init_music();
+    if (res != RETURN_CONTINUE) {
+        return Err::FromCode(res);
+    }
+
+
+    SetEIP(-182);
+
+    engine_init_sound();
+
+    engine_pre_init_gfx();
+
+    LOCK_VARIABLE(timerloop);
+    LOCK_FUNCTION(dj_timer_handler);
+    set_game_speed(40);
+
+    SetEIP(-20);
+    //thisroom.allocall();
+    SetEIP(-19);
+    //setup_sierra_interface();   // take this out later
+
+    res = engine_load_game_data();
+    if (res != RETURN_CONTINUE) {
+        return Err::FromCode(res);
+    }
+
+    res = engine_check_register_game();
+    if (res != RETURN_CONTINUE) {
+        return Err::FromCode(res);
+    }
+
+    engine_init_title();
+
+    SetEIP(-189);
+
+    engine_init_directories();
+
+    SetEIP(-178);
+
+    res = engine_check_disk_space();
+    if (res != RETURN_CONTINUE) {
+        return Err::FromCode(res);
+    }
+
+    // [IKM] I do not really understand why is this checked only now;
+    // should not it be checked right after fonts initialization?
+    res = engine_check_fonts();
+    if (res != RETURN_CONTINUE) {
+        return Err::FromCode(res);
+    }
+
+    engine_init_rand();
+
+    engine_show_preload();
+
+    res = engine_init_sprites();
+    if (res != RETURN_CONTINUE) {
+        return Err::FromCode(res);
+    }
+
+    engine_init_game_settings();
+
+    engine_prepare_to_start_game();
+
+    initialize_start_and_play_game(_overrideStartRoom, _loadSaveGameOnStartup);
+
+    _updateMP3ThreadRunning = false;
+    quit("|bye!");
+
+    return Err::Nil();
+}
+
 #if defined(WINDOWS_VERSION)
 /* static */ int CAGSEngine::MallocFailHandler(size_t amountwanted) {
     // Drop the ballast to ensure some free memory space
@@ -804,237 +867,6 @@ HErr CAGSEngine::RunSetup()
   _theEngine->_checkDynamicSpritesAtExit = true;
 }
 
-void CAGSEngine::engine_force_window()
-{
-#ifdef ______NOT_NOW
-    
-#endif
-}
-
-HErr CAGSEngine::InitGameDataFile()
-{
-    Out::Notify("Initializing game data");
-
-    // initialize the data file
-    if (!SetGameDataFileName())
-    {
-        return Err::FromCode(EXIT_NORMAL);
-    }
-
-    int errcod = csetlib(const_cast<char*>(_gameDataFileName.GetCStr()),"");  // assume it's appended to exe
-
-    SetEIP(-194);
-    //  char gamefilenamebuf[200];
-
-    HErr err;
-    if ((errcod!=0) && (!_mustChangeToGameDataDirectory)) {
-        // it's not, so look for the file
-        errcod = InitGameDataExternal();
-    }
-    else {
-        // set the data filename to the EXE name
-        err = InitGameDataInternal();
-    }
-
-    if (errcod!=0) {  // there's a problem
-        if (errcod==-1) {  // file not found
-            CString msg;
-            msg.Format("You must create and save a game first in the AGS Editor before you can use "
-                       "this engine.\n\n"
-                       "If you have just downloaded AGS, you are probably running the wrong executable.\n"
-                       "Run AGSEditor.exe to launch the editor.\n\n"
-                       "(Unable to find '%s')\n", _gameDataFileName);
-            _platform->DisplayAlert(msg.GetCStr());
-        }
-        else if (errcod==-4)
-            _platform->DisplayAlert("ERROR: Too many files in data file.");
-        else _platform->DisplayAlert("ERROR: The file is corrupt. Make sure you have the correct version of the\n"
-            "editor, and that this really is an AGS game.\n");
-        return Err::FromCode(EXIT_NORMAL);
-    }
-
-    if (!err->IsNil()) {
-        return err;
-    }
-
-    SetEIP(-193);
-    return Err::Nil();
-}
-
-bool CAGSEngine::SetGameDataFileName()
-{
-#ifdef WINDOWS_VERSION
-    //WCHAR buffer[MAX_PATH];
-    //LPCWSTR dataFilePath = wArgv[datafile_argv];
-    // Hack for Windows in case there are unicode chars in the path.
-    // The normal argv[] array has ????? instead of the unicode chars
-    // and fails, so instead we manually get the short file name, which
-    // is always using ANSI chars.
-    CString buffer;
-    if (!Path::IsPath(_gameDataFileName))
-    {
-        _gameDataFileName = Path::MakePath(Path::GetCurrentDirectory(), _gameDataFileName);
-    }
-
-    //if (wcschr(dataFilePath, '\\') == NULL)
-    //{
-    //    GetCurrentDirectoryW(MAX_PATH, buffer);
-    //    wcscat(buffer, L"\\");
-    //    wcscat(buffer, dataFilePath);
-    //    dataFilePath = &buffer[0];
-    //}
-    _gameDataFileName = Path::GetShortPath(_gameDataFileName);
-    if (_gameDataFileName.IsEmpty())
-    {
-        _platform->DisplayAlert("Unable to determine startup path: GetShortPathNameW failed. The specified game file might be missing.");
-        return false;
-    }
-    
-#elif defined(PSP_VERSION) || defined(ANDROID_VERSION) || defined(IOS_VERSION)
-    _gameDataFileName = psp_game_file_name;
-#else
-    //game_file_name = (char*)malloc(MAX_PATH);
-    //strcpy(game_file_name, get_filename(global_argv[datafile_argv]));
-    _gameDataFileName = Path::GetFileName(_gameDataFileName);
-#endif
-    return true;
-}
-
-int CAGSEngine::InitGameDataExternal()
-{
-    // [IKM] If I understand this right, this method is called only when the game file name was specified
-    // in cmdline, but not found
-    int errcod = 0;
-    _gameDataFileName = ci_find_file(const_cast<char*>(_theSetup->DataFilesDir.GetCStr()),
-                                     const_cast<char*>(_theSetup->MainDataFilename.GetCStr()));
-
-#if !defined(WINDOWS_VERSION) && !defined(PSP_VERSION) && !defined(ANDROID_VERSION) && !defined(IOS_VERSION)
-    // Search the exe files for the game data
-    if ((_gameDataFileName.IsEmpty()) || (access(_gameDataFileName.GetCStr(), F_OK) != 0))
-    {
-        DIR* fd = NULL;
-        struct dirent* entry = NULL;
-        version_info_t version_info;
-
-        if ((fd = opendir(".")))
-        {
-            while ((entry = readdir(fd)))
-            {
-                // Exclude the setup program
-                if (stricmp(entry->d_name, "winsetup.exe") == 0)
-                    continue;
-
-                // Filename must be >= 4 chars long
-                int length = strlen(entry->d_name);
-                if (length < 4)
-                    continue;
-
-                if (stricmp(&(entry->d_name[length - 4]), ".exe") == 0)
-                {
-                    if (!getVersionInformation(entry->d_name, &version_info))
-                        continue;
-                    if (strcmp(version_info.internal_name, "acwin") == 0)
-                    {
-                        _gameDataFileName = entry->d_name;
-                        break;
-                    }
-                }
-            }
-            closedir(fd);
-        }
-    }
-#endif
-
-    errcod=csetlib(const_cast<char*>(_gameDataFileName.GetCStr()),"");
-    if (errcod) {
-        //sprintf(gamefilenamebuf,"%s\\ac2game.ags",_theSetup->data_files_dir);
-        _gameDataFileName = ci_find_file(const_cast<char*>(_theSetup->DataFilesDir.GetCStr()), "ac2game.ags");
-        errcod = csetlib(const_cast<char*>(_gameDataFileName.GetCStr()),"");
-    }
-
-    return errcod;
-}
-
-HErr CAGSEngine::InitGameDataInternal()
-{
-    // [IKM] .... is it all about this?
-    _theSetup->MainDataFilename = _gameDataFileName;
-    if (_theSetup->DataFilesDir.Compare(".") == 0)
-    {
-        _theSetup->DataFilesDir = _gameDataDirectory;
-    }
-
-        /*
-    if (((strchr(game_file_name, '/') != NULL) ||
-        (strchr(game_file_name, '\\') != NULL)) &&
-        (stricmp(_theSetup->data_files_dir, ".") == 0)) {
-            // there is a path in the game file name (and the user
-            // has not specified another one)
-            // save the path, so that it can load the VOX files, etc
-            _theSetup->data_files_dir = (char*)malloc(strlen(game_file_name) + 1);
-            strcpy(_theSetup->data_files_dir, game_file_name);
-
-            if (strrchr(_theSetup->data_files_dir, '/') != NULL)
-                strrchr(_theSetup->data_files_dir, '/')[0] = 0;
-            else if (strrchr(_theSetup->data_files_dir, '\\') != NULL)
-                strrchr(_theSetup->data_files_dir, '\\')[0] = 0;
-            else {
-                _platform->DisplayAlert("Error processing game file name: slash but no slash"); // what? :)
-                return Err::FromCode(EXIT_NORMAL);
-            }
-    }
-    */
-
-    return Err::Nil();
-}
-
-void CAGSEngine::engine_init_fonts()
-{
-#ifdef ______NOT_NOW
-    Out::Notify("Initializing TTF renderer");
-
-    init_font_renderer();
-#endif
-}
-
-int CAGSEngine::engine_init_mouse()
-{
-#ifdef ______NOT_NOW
-    Out::Notify("Initializing mouse");
-
-#ifdef _DEBUG
-    // Quantify fails with the mouse for some reason
-    minstalled();
-#else
-    if (minstalled()==0) {
-        _platform->DisplayAlert(_platform->GetNoMouseErrorString());
-        return EXIT_NORMAL;
-    }
-#endif // DEBUG
-#endif
-
-	return RETURN_CONTINUE;
-}
-
-int CAGSEngine::engine_check_memory()
-{
-#ifdef ______NOT_NOW
-    Out::Notify("Checking memory");
-
-    char*memcheck=(char*)malloc(4000000);
-    if (memcheck==NULL) {
-        _platform->DisplayAlert("There is not enough memory available to run this game. You need 4 Mb free\n"
-            "extended memory to run the game.\n"
-            "If you are running from Windows, check the 'DPMI memory' setting on the DOS box\n"
-            "properties.\n");
-        return EXIT_NORMAL;
-    }
-    free(memcheck);
-    unlink (replayTempFile);
-#endif
-    return RETURN_CONTINUE;
-}
-
 void CAGSEngine::engine_init_rooms()
 {
 #ifdef ______NOT_NOW
@@ -1057,10 +889,10 @@ int CAGSEngine::engine_init_speech()
 
     FILE*ppp;
 
-    if (_theSetup->no_speech_pack == 0) {
+    if (_theSetup.no_speech_pack == 0) {
         /* Can't just use fopen here, since we need to change the filename
         so that pack functions, etc. will have the right case later */
-        speech_file = ci_find_file(_theSetup->data_files_dir, "speech.vox");
+        speech_file = ci_find_file(_theSetup.data_files_dir, "speech.vox");
 
         ppp = ci_fopen(speech_file, "rb");
 
@@ -1123,7 +955,7 @@ int CAGSEngine::engine_init_music()
 
     /* Can't just use fopen here, since we need to change the filename
     so that pack functions, etc. will have the right case later */
-    music_file = ci_find_file(_theSetup->data_files_dir, "audio.vox");
+    music_file = ci_find_file(_theSetup.data_files_dir, "audio.vox");
 
     /* Don't need to use ci_fopen here, because we've used ci_find_file to get
     the case insensitive matched filename already */
@@ -1157,42 +989,15 @@ int CAGSEngine::engine_init_music()
     return RETURN_CONTINUE;
 }
 
-void CAGSEngine::engine_init_keyboard()
-{
-#ifdef ______NOT_NOW
-#ifdef ALLEGRO_KEYBOARD_HANDLER
-    Out::Notify("Initializing keyboard");
-
-    install_keyboard();
-#endif
-#endif
-}
-
-void CAGSEngine::engine_init_timer()
-{
-#ifdef ______NOT_NOW
-    Out::Notify("Install timer");
-
-    _platform->WriteConsole("Checking sound inits.\n");
-    if (opts.mod_player) reserve_voices(16,-1);
-    // maybe this line will solve the sound volume?
-    // [IKM] does this refer to install_timer or set_volume_per_voice?
-    install_timer();
-#if ALLEGRO_DATE > 19991010
-    set_volume_per_voice(1);
-#endif
-#endif
-}
-
 void CAGSEngine::engine_init_sound()
 {
 #ifdef ______NOT_NOW
 #ifdef WINDOWS_VERSION
     // don't let it use the hardware mixer verion, crashes some systems
-    //if ((_theSetup->digicard == DIGI_AUTODETECT) || (_theSetup->digicard == DIGI_DIRECTX(0)))
-    //    _theSetup->digicard = DIGI_DIRECTAMX(0);
+    //if ((_theSetup.digicard == DIGI_AUTODETECT) || (_theSetup.digicard == DIGI_DIRECTX(0)))
+    //    _theSetup.digicard = DIGI_DIRECTAMX(0);
 
-    if (_theSetup->digicard == DIGI_DIRECTX(0)) {
+    if (_theSetup.digicard == DIGI_DIRECTX(0)) {
         // DirectX mixer seems to buffer an extra sample itself
         use_extra_sound_offset = 1;
     }
@@ -1209,33 +1014,33 @@ void CAGSEngine::engine_init_sound()
     // PSP: Disable sound by config file.
     if (!psp_audio_enabled)
     {
-        _theSetup->digicard = DIGI_NONE;
-        _theSetup->midicard = MIDI_NONE;
+        _theSetup.digicard = DIGI_NONE;
+        _theSetup.midicard = MIDI_NONE;
     }
 
     if (!psp_midi_enabled)
-        _theSetup->midicard = MIDI_NONE;
+        _theSetup.midicard = MIDI_NONE;
 
-    if (install_sound(_theSetup->digicard,_theSetup->midicard,NULL)!=0) {
+    if (install_sound(_theSetup.digicard,_theSetup.midicard,NULL)!=0) {
         reserve_voices(-1,-1);
         opts.mod_player=0;
         opts.mp3_player=0;
-        if (install_sound(_theSetup->digicard,_theSetup->midicard,NULL)!=0) {
-            if ((_theSetup->digicard != DIGI_NONE) && (_theSetup->midicard != MIDI_NONE)) {
+        if (install_sound(_theSetup.digicard,_theSetup.midicard,NULL)!=0) {
+            if ((_theSetup.digicard != DIGI_NONE) && (_theSetup.midicard != MIDI_NONE)) {
                 // only flag an error if they wanted a sound card
                 _platform->DisplayAlert("\nUnable to initialize your audio hardware.\n"
                     "[Problem: %s]\n",allegro_error);
             }
             reserve_voices(0,0);
             install_sound(DIGI_NONE, MIDI_NONE, NULL);
-            _theSetup->digicard = DIGI_NONE;
-            _theSetup->midicard = MIDI_NONE;
+            _theSetup.digicard = DIGI_NONE;
+            _theSetup.midicard = MIDI_NONE;
         }
     }
 
     SetEIP(-181);
 
-    if (_theSetup->digicard == DIGI_NONE) {
+    if (_theSetup.digicard == DIGI_NONE) {
         // disable speech and music if no digital sound
         // therefore the MIDI soundtrack will be used if present,
         // and the voice mode should not go to Voice Only
@@ -1245,45 +1050,11 @@ void CAGSEngine::engine_init_sound()
 #endif
 }
 
-void CAGSEngine::engine_init_debug()
-{
-#ifdef ______NOT_NOW
-    //set_volume(255,-1);
-    if ((_theSetup->DebugFlags & (~DBG_DEBUGMODE)) >0) {
-        _platform->DisplayAlert("Engine debugging enabled.\n"
-            "\nNOTE: You have selected to enable one or more engine debugging options.\n"
-            "These options cause many parts of the game to behave abnormally, and you\n"
-            "may not see the game as you are used to it. The point is to test whether\n"
-            "the engine passes a point where it is crashing on you normally.\n"
-            "[Debug flags enabled: 0x%02X]\n"
-            "Press a key to continue.\n",_theSetup->DebugFlags);
-    }
-#endif
-}
-
-void CAGSEngine::engine_init_exit_handler()
-{
-#ifdef ______NOT_NOW
-    Out::Notify("Install exit handler");
-
-    atexit(atexit_handler);
-#endif
-}
-
 void CAGSEngine::engine_init_rand()
 {
 #ifdef ______NOT_NOW
     _theGame->GetGameState().randseed = time(NULL);
     srand (_theGame->GetGameState().randseed);
-#endif
-}
-
-void CAGSEngine::engine_init_pathfinder()
-{
-    Out::Notify("Initialize path finder library");
-
-#ifdef ______NOT_NOW
-    init_pathfinder();
 #endif
 }
 
@@ -1363,7 +1134,7 @@ void CAGSEngine::engine_init_directories()
         // running in debugger
         use_compiled_folder_as_current_dir = 1;
         // don't redirect to the game exe folder (_Debug)
-        _theSetup->data_files_dir = ".";
+        _theSetup.data_files_dir = ".";
     }
 
     if (game.saveGameFolderName[0] != 0)
@@ -1463,6 +1234,15 @@ void CAGSEngine::engine_init_modxm_player()
     opts.mod_player = 0;
     Out::Notify("Compiled without MOD/XM player");
 #endif
+
+    _platform->WriteConsole("Checking sound inits.\n");
+    if (opts.mod_player) reserve_voices(16,-1);
+    // maybe this line will solve the sound volume?
+    // [IKM] does this refer to install_timer or set_volume_per_voice?
+#if ALLEGRO_DATE > 19991010
+    set_volume_per_voice(1);
+#endif
+    //set_volume(255,-1);
 #endif
 }
 
@@ -1748,7 +1528,7 @@ void CAGSEngine::init_game_settings() {
     for (ee = 0; ee < MAX_BSCENE; ee++) 
         _theGame->GetGameState().raw_modified[ee] = 0;
     _theGame->GetGameState().game_speed_modifier = 0;
-    if (_theSetup->DebugFlags & DBG_DEBUGMODE)
+    if (_theSetup.DebugFlags & DBG_DEBUGMODE)
         _theGame->GetGameState().debug_mode = 1;
     gui_disabled_style = convert_gui_disabled_style(game.options[OPT_DISABLEOFF]);
 
@@ -1766,8 +1546,8 @@ void CAGSEngine::init_game_settings() {
     for (ee = 0; ee < MAX_SOUND_CHANNELS; ee++)
         last_sound_played[ee] = -1;
 
-    if (_theSetup->translation)
-        init_translation (_theSetup->translation);
+    if (_theSetup.translation)
+        init_translation (_theSetup.translation);
 
     update_invorder();
     displayed_room = -10;
@@ -1794,7 +1574,7 @@ void CAGSEngine::engine_init_game_shit()
     strcpy(scsystem.aci_version, ACI_VERSION_TEXT);
     scsystem.os = _platform->GetSystemOSID();
 
-    if (_theSetup->windowed)
+    if (_theSetup.windowed)
         scsystem.windowed = 1;
 
 #if defined(WINDOWS_VERSION) || defined(LINUX_VERSION) || defined(MAC_VERSION)
@@ -1904,30 +1684,24 @@ void CAGSEngine::engine_prepare_to_start_game()
 }
 
 CAGSEngine::CAGSEngine()
+    : _theSetup(*new CEngineSetup())
+    , _hAllegroWnd(allegro_wnd)
 {
     _eip                = 0;
     _eipGuiNum          = 0;
     _eipGuiObj          = 0;
     _ignoreConfigFile   = false;
-    _mustChangeToGameDataDirectory = false;
 
     _mustRunSetup       = false;
 
-    _theSetup           = new CEngineSetup();
-    _hAllegroWnd        = NULL;
+    //_hAllegroWnd        = NULL;
+    _theAssetsMgr       = NULL;
     _theGame            = NULL;
 
     _properExit                 = false;
     _wantExit                   = false;
     _abortEngine                = false;
     _checkDynamicSpritesAtExit  = false;
-}
-
-void CAGSEngine::OverrideSetup()
-{
-    _theSetup->GfxDriverID = "DX5";
-    _theSetup->EnableAntialiasing = 1;//psp_gfx_smooth_sprites;
-    _theSetup->Translation = "default";//psp_translation;
 }
 
 } // namespace Core
