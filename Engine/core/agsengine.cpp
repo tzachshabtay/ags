@@ -111,34 +111,39 @@ void CAGSEngine::DestroyInstance()
     _theEngine = NULL;
 }
 
-CString CAGSEngine::GetEngineVersion() const
+/* static */ CString CAGSEngine::GetEngineVersion()
 {
     return CString(ACI_VERSION_TEXT);
 }
 
-void CAGSEngine::SetEIP(int32_t eip)
+/* static */ void CAGSEngine::SetEIP(int32_t eip)
 {
-    _eip = eip;
+    _theEngine->_eip = eip;
 }
 
-int32_t CAGSEngine::GetEIP() const
+/* static */ int32_t CAGSEngine::GetEIP()
 {
-    return _eip;
+    return _theEngine->_eip;
 }
 
-const CCmdArgs &CAGSEngine::GetCmdArgs() const
+/* static */ const CCmdArgs &CAGSEngine::GetCmdArgs()
 {
-    return _cmdArgs;
+    return _theEngine->_cmdArgs;
 }
 
-const CEngineSetup &CAGSEngine::GetSetup() const
+/* static */ /*const*/ CEngineSetup &CAGSEngine::GetSetup()
 {
-    return _theSetup;
+    return _theEngine->_theSetup;
 }
 
-CAGSGame *CAGSEngine::GetGame() const
+/* static */ CAssetsManager *CAGSEngine::GetAssetsManager()
 {
-    return _theGame;
+    return _theEngine->_theAssetsMgr;
+}
+
+/* static */ CAGSGame *CAGSEngine::GetGame()
+{
+    return _theEngine->_theGame;
 }
 
 HErr CAGSEngine::StartUpAndRun(const CCmdArgs &cmdargs)
@@ -241,7 +246,6 @@ HErr CAGSEngine::_StartUp()
     // 4. Basic initialization
     //
     SetEIP(-999);
-    //_theGame->Initialize(); // FIXME: move down
 
     // [IKM] For some bizzare reason this function is a part of routefnd module;
     // I cannot just move it here, because it references certain variables from
@@ -675,7 +679,7 @@ HErr CAGSEngine::CreateComponents()
     // not game data found there's no sense in initializing
     // other components.
     //
-    _theAssetsMgr = new CAssetsManager(_theSetup, _cmdArgs[_dataFileArgV], Path::GetCurrentDirectory());
+    _theAssetsMgr = new CAssetsManager(_cmdArgs[_dataFileArgV], Path::GetCurrentDirectory());
     HErr err = _theAssetsMgr->RegisterGameData();
     if (!err->IsNil()) {
         return err;
@@ -731,7 +735,6 @@ HErr CAGSEngine::CreateComponents()
     _platform->PostAllegroInit((_theSetup.Windowed > 0) ? true : false);
 
     engine_set_gfx_driver_callbacks();
-
     engine_set_color_conversions();
 
     _theSystem->GetScreen()->SetMultitasking(false);
@@ -753,28 +756,25 @@ HErr CAGSEngine::CreateFontRenderers()
 
 HErr CAGSEngine::CreateGame()
 {
-    engine_init_rooms();
+    _theGame = new CAGSGame();
+    HErr err = _theGame->Initialize();
 
-    SetEIP(-186);
-
-    int res = engine_init_speech();
-    if (res != RETURN_CONTINUE) {
-        return Err::FromCode(res);
+    // TODO: do this somehow else
+    if (_theSetup.Digicard == DIGI_NONE) {
+        // disable speech and music if no digital sound
+        // therefore the MIDI soundtrack will be used if present,
+        // and the voice mode should not go to Voice Only
+        _theGame->GetGameState().want_speech = -2;
+        //_theGame->GetGameState().seperate_music_lib = 0;
+        _theAssetsMgr->_seperateMusicLib = 0;
     }
 
     SetEIP(-185);
 
-    res = engine_init_music();
-    if (res != RETURN_CONTINUE) {
-        return Err::FromCode(res);
-    }
-
-
     SetEIP(-182);
 
-    engine_init_sound();
-
-    engine_pre_init_gfx();
+    Out::Notify("Initialize gfx");
+    _platform->InitialiseAbufAtStartup();
 
     LOCK_VARIABLE(timerloop);
     LOCK_FUNCTION(dj_timer_handler);
@@ -785,7 +785,7 @@ HErr CAGSEngine::CreateGame()
     SetEIP(-19);
     //setup_sierra_interface();   // take this out later
 
-    res = engine_load_game_data();
+    int res = engine_load_game_data();
     if (res != RETURN_CONTINUE) {
         return Err::FromCode(res);
     }
@@ -867,203 +867,11 @@ HErr CAGSEngine::CreateGame()
   _theEngine->_checkDynamicSpritesAtExit = true;
 }
 
-void CAGSEngine::engine_init_rooms()
-{
-#ifdef ______NOT_NOW
-    Out::Notify("Initializing rooms");
-
-    roomstats=(RoomStatus*)calloc(sizeof(RoomStatus),MAX_ROOMS);
-    for (int ee=0;ee<MAX_ROOMS;ee++) {
-        roomstats[ee].beenhere=0;
-        roomstats[ee].numobj=0;
-        roomstats[ee].tsdatasize=0;
-        roomstats[ee].tsdata=NULL;
-    }
-#endif
-}
-
-int CAGSEngine::engine_init_speech()
-{
-#ifdef ______NOT_NOW
-    _theGame->GetGameState().want_speech=-2;
-
-    FILE*ppp;
-
-    if (_theSetup.no_speech_pack == 0) {
-        /* Can't just use fopen here, since we need to change the filename
-        so that pack functions, etc. will have the right case later */
-        speech_file = ci_find_file(_theSetup.data_files_dir, "speech.vox");
-
-        ppp = ci_fopen(speech_file, "rb");
-
-        if (ppp == NULL)
-        {
-            // In case they're running in debug, check Compiled folder
-            free(speech_file);
-            speech_file = ci_find_file("Compiled", "speech.vox");
-            ppp = ci_fopen(speech_file, "rb");
-        }
-
-        if (ppp!=NULL) {
-            fclose(ppp);
-
-            Out::Notify("Initializing speech vox");
-
-            //if (csetlib(useloc,"")!=0) {
-            if (csetlib(speech_file,"")!=0) {
-                _platform->DisplayAlert("Unable to initialize speech sample file - check for corruption and that\nit belongs to this game.\n");
-                return EXIT_NORMAL;
-            }
-            FILE *speechsync = clibfopen("syncdata.dat", "rb");
-            if (speechsync != NULL) {
-                // this game has voice lip sync
-                if (getw(speechsync) != 4)
-                { 
-                    // Don't display this warning.
-                    // _platform->DisplayAlert("Unknown speech lip sync format (might be from older or newer version); lip sync disabled");
-                }
-                else {
-                    numLipLines = getw(speechsync);
-                    splipsync = (SpeechLipSyncLine*)malloc (sizeof(SpeechLipSyncLine) * numLipLines);
-                    for (int ee = 0; ee < numLipLines; ee++)
-                    {
-                        splipsync[ee].numPhenomes = getshort(speechsync);
-                        fread(splipsync[ee].filename, 1, 14, speechsync);
-                        splipsync[ee].endtimeoffs = (int*)malloc(splipsync[ee].numPhenomes * sizeof(int));
-                        fread(splipsync[ee].endtimeoffs, sizeof(int), splipsync[ee].numPhenomes, speechsync);
-                        splipsync[ee].frame = (short*)malloc(splipsync[ee].numPhenomes * sizeof(short));
-                        fread(splipsync[ee].frame, sizeof(short), splipsync[ee].numPhenomes, speechsync);
-                    }
-                }
-                fclose (speechsync);
-            }
-            csetlib(game_file_name,"");
-            _platform->WriteConsole("Speech sample file found and initialized.\n");
-            _theGame->GetGameState().want_speech=1;
-        }
-    }
-#endif
-
-    return RETURN_CONTINUE;
-}
-
-int CAGSEngine::engine_init_music()
-{
-#ifdef ______NOT_NOW
-    FILE*ppp;
-    _theGame->GetGameState().seperate_music_lib = 0;
-
-    /* Can't just use fopen here, since we need to change the filename
-    so that pack functions, etc. will have the right case later */
-    music_file = ci_find_file(_theSetup.data_files_dir, "audio.vox");
-
-    /* Don't need to use ci_fopen here, because we've used ci_find_file to get
-    the case insensitive matched filename already */
-    // Use ci_fopen anyway because it can handle NULL filenames.
-    ppp = ci_fopen(music_file, "rb");
-
-    if (ppp == NULL)
-    {
-        // In case they're running in debug, check Compiled folder
-        free(music_file);
-        music_file = ci_find_file("Compiled", "audio.vox");
-        ppp = ci_fopen(music_file, "rb");
-    }
-
-    if (ppp!=NULL) {
-        fclose(ppp);
-
-        Out::Notify("Initializing audio vox");
-
-        //if (csetlib(useloc,"")!=0) {
-        if (csetlib(music_file,"")!=0) {
-            _platform->DisplayAlert("Unable to initialize music library - check for corruption and that\nit belongs to this game.\n");
-            return EXIT_NORMAL;
-        }
-        csetlib(game_file_name,"");
-        _platform->WriteConsole("Audio vox found and initialized.\n");
-        _theGame->GetGameState().seperate_music_lib = 1;
-    }
-#endif
-
-    return RETURN_CONTINUE;
-}
-
-void CAGSEngine::engine_init_sound()
-{
-#ifdef ______NOT_NOW
-#ifdef WINDOWS_VERSION
-    // don't let it use the hardware mixer verion, crashes some systems
-    //if ((_theSetup.digicard == DIGI_AUTODETECT) || (_theSetup.digicard == DIGI_DIRECTX(0)))
-    //    _theSetup.digicard = DIGI_DIRECTAMX(0);
-
-    if (_theSetup.digicard == DIGI_DIRECTX(0)) {
-        // DirectX mixer seems to buffer an extra sample itself
-        use_extra_sound_offset = 1;
-    }
-
-    // if the user clicked away to another app while we were
-    // loading, DirectSound will fail to initialize. There doesn't
-    // seem to be a solution to force us back to the foreground,
-    // because we have no actual visible window at this time
-
-#endif
-
-    Out::Notify("Initialize sound drivers");
-
-    // PSP: Disable sound by config file.
-    if (!psp_audio_enabled)
-    {
-        _theSetup.digicard = DIGI_NONE;
-        _theSetup.midicard = MIDI_NONE;
-    }
-
-    if (!psp_midi_enabled)
-        _theSetup.midicard = MIDI_NONE;
-
-    if (install_sound(_theSetup.digicard,_theSetup.midicard,NULL)!=0) {
-        reserve_voices(-1,-1);
-        opts.mod_player=0;
-        opts.mp3_player=0;
-        if (install_sound(_theSetup.digicard,_theSetup.midicard,NULL)!=0) {
-            if ((_theSetup.digicard != DIGI_NONE) && (_theSetup.midicard != MIDI_NONE)) {
-                // only flag an error if they wanted a sound card
-                _platform->DisplayAlert("\nUnable to initialize your audio hardware.\n"
-                    "[Problem: %s]\n",allegro_error);
-            }
-            reserve_voices(0,0);
-            install_sound(DIGI_NONE, MIDI_NONE, NULL);
-            _theSetup.digicard = DIGI_NONE;
-            _theSetup.midicard = MIDI_NONE;
-        }
-    }
-
-    SetEIP(-181);
-
-    if (_theSetup.digicard == DIGI_NONE) {
-        // disable speech and music if no digital sound
-        // therefore the MIDI soundtrack will be used if present,
-        // and the voice mode should not go to Voice Only
-        _theGame->GetGameState().want_speech = -2;
-        _theGame->GetGameState().seperate_music_lib = 0;
-    }
-#endif
-}
-
 void CAGSEngine::engine_init_rand()
 {
 #ifdef ______NOT_NOW
     _theGame->GetGameState().randseed = time(NULL);
     srand (_theGame->GetGameState().randseed);
-#endif
-}
-
-void CAGSEngine::engine_pre_init_gfx()
-{
-    Out::Notify("Initialize gfx");
-
-#ifdef ______NOT_NOW
-    _platform->InitialiseAbufAtStartup();
 #endif
 }
 
@@ -1694,7 +1502,6 @@ CAGSEngine::CAGSEngine()
 
     _mustRunSetup       = false;
 
-    //_hAllegroWnd        = NULL;
     _theAssetsMgr       = NULL;
     _theGame            = NULL;
 

@@ -79,13 +79,14 @@ public:
     // Destroys the only instance of AGS
     static void         DestroyInstance();
 
-    CString         GetEngineVersion() const;
-    void            SetEIP(int32_t eip);
-    int32_t         GetEIP() const;
-    const CCmdArgs  &GetCmdArgs() const;
+    static CString  GetEngineVersion();
+    static void     SetEIP(int32_t eip);
+    static int32_t  GetEIP();
+    static const CCmdArgs  &GetCmdArgs();
 
-    const CEngineSetup &GetSetup() const;
-    CAGSGame        *GetGame() const;
+    static /*const*/ CEngineSetup   &GetSetup();
+    static CAssetsManager           *GetAssetsManager();
+    static CAGSGame                 *GetGame();
 
     // There are three ways of running the Engine:
     // first is to call StartUpAndRun() and let it handle the rest;
@@ -145,8 +146,6 @@ protected:
     void engine_init_fonts();
     int engine_init_mouse();
     int engine_check_memory();
-    void engine_init_rooms();
-    int engine_init_speech();
     int engine_init_music();
     void engine_init_keyboard();
     void engine_init_timer();

@@ -16,8 +16,9 @@ namespace Common
 namespace Util
 {
 
-struct CString
+class CString
 {
+public:
     char * s;
 
     CString()

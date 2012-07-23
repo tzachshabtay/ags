@@ -1089,6 +1089,10 @@
 				Name="device"
 				>
 				<File
+					RelativePath="..\..\Engine\device\allegro_audio.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Engine\device\allegro_keyboard.cpp"
 					>
 				</File>
@@ -1098,6 +1102,10 @@
 				</File>
 				<File
 					RelativePath="..\..\Engine\device\allegro_screen.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\device\device_audio.cpp"
 					>
 				</File>
 				<File
@@ -1145,11 +1153,19 @@
 				Name="game"
 				>
 				<File
+					RelativePath="..\..\Engine\game\_room.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Engine\game\agsgame.cpp"
 					>
 				</File>
 				<File
 					RelativePath="..\..\Engine\game\assets_manager.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\game\lipsync.cpp"
 					>
 				</File>
 			</Filter>
@@ -2083,6 +2099,10 @@
 				Name="game"
 				>
 				<File
+					RelativePath="..\..\Engine\game\_room.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Engine\game\agsgame.h"
 					>
 				</File>
@@ -2095,6 +2115,10 @@
 				Name="device"
 				>
 				<File
+					RelativePath="..\..\Engine\device\allegro_audio.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Engine\device\allegro_keyboard.h"
 					>
 				</File>
@@ -2104,6 +2128,10 @@
 				</File>
 				<File
 					RelativePath="..\..\Engine\device\allegro_screen.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\device\device_audio.h"
 					>
 				</File>
 				<File

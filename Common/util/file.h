@@ -42,11 +42,17 @@ namespace Util
 
 //using AGS::Common::Util::CString;
 
-struct CFile
+class CFile
 {
     FILE *f;
 
+public:
     static CFile *Open(const CString &file_name, const CString &opt);
+    static CFile *CreateClient(FILE *f);
+    static CFile *CreateOwner(FILE *f);
+
+private:
+    CFile();
 };
 
 } // namespace Util

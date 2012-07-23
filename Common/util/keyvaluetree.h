@@ -20,7 +20,7 @@ namespace Util
 {
 
 // Forward declarations
-struct CStream;
+class CStream;
 // Using-declarations
 using AGS::Common::Core::HErr;
 

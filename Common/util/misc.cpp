@@ -30,6 +30,7 @@
 #include "allegro.h"
 #include "util/misc.h"
 
+// [IKM] TODO: remove this function later (or copy contents)
 #if defined(MAC_VERSION) || defined(WINDOWS_VERSION) || defined(PSP_VERSION) || defined(ANDROID_VERSION)
 #include <string.h>
 /* File Name Concatenator basically on Windows / DOS */

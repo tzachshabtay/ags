@@ -1,11 +1,13 @@
 
 #include "Common/core/out.h"
 #include "Common/platform/base/platform_api.h"
+#include "Common/util/filestream.h"
 #include "Common/util/path.h"
 #include "Engine/core/agsengine.h"
 #include "Engine/game/assets_manager.h"
 #include "ac/common_defines.h"
 #include "platform/base/agsplatformdriver.h"
+#include "util/misc.h"
 
 // from clib32
 extern "C" int cfopenpriority;
@@ -27,14 +29,15 @@ namespace Game
 {
 
 // Using-declarations
+using AGS::Common::Util::CFile;
+using AGS::Common::Util::CFileStream;
 using AGS::Engine::Core::CAGSEngine;
 namespace Out = AGS::Common::Core::Out;
 namespace Err = AGS::Common::Core::Err;
 namespace Path = AGS::Common::Util::Path;
 
-CAssetsManager::CAssetsManager(CEngineSetup &setup, const CString &data_file_name, const CString &data_directory)
-    : _theSetup(setup)
-    , _gameDataFileName(data_file_name)
+CAssetsManager::CAssetsManager(const CString &data_file_name, const CString &data_directory)
+    : _gameDataFileName(data_file_name)
     , _gameDataDirectory(data_directory)
 {
 }
@@ -49,8 +52,9 @@ HErr CAssetsManager::RegisterGameData()
 
     AGSPlatformDriver *platform = AGSPlatformDriver::GetDriver();
     CAGSEngine *engine = CAGSEngine::GetInstance();
+    const CEngineSetup &setup = engine->GetSetup();
 
-    cfopenpriority=2; // Clib32
+    cfopenpriority = PR_FILEFIRST;
 
     // initialize the data file
     if (!SetGameDataFileName())
@@ -64,7 +68,7 @@ HErr CAssetsManager::RegisterGameData()
     //  char gamefilenamebuf[200];
 
     HErr err;
-    if ((errcod!=0) && (!_theSetup.MustChangeToGameDataDirectory)) {
+    if ((errcod!=0) && (!setup.MustChangeToGameDataDirectory)) {
         // it's not, so look for the file
         errcod = InitGameDataExternal();
     }
@@ -95,7 +99,14 @@ HErr CAssetsManager::RegisterGameData()
     }
 
     engine->SetEIP(-193);
-    return Err::Nil();
+
+    err = RegisterAdditionalDataFiles();
+    return err;
+}
+
+CString CAssetsManager::GetDataDirectory() const
+{
+    return _gameDataDirectory;
 }
 
 CString CAssetsManager::GetDataFileName() const
@@ -103,10 +114,54 @@ CString CAssetsManager::GetDataFileName() const
     return _gameDataFileName;
 }
 
-CString CAssetsManager::GetDataDirectory() const
+CString CAssetsManager::GetMusicFileName() const
 {
-    return _gameDataDirectory;
+    return _musicFileName;
 }
+
+CString CAssetsManager::GetSpeechFileName() const
+{
+    return _speechFileName;
+}
+
+AssetsSearchPriority CAssetsManager::GetSearchPriority() const
+{
+    return (AssetsSearchPriority)cfopenpriority;
+}
+
+bool CAssetsManager::SetSearchPriority(AssetsSearchPriority pr)
+{
+    if (pr < kAssetsPriority_Data || pr > kAssetsPriority_File)
+    {
+        return false;
+    }
+
+    cfopenpriority = (int)pr;
+    return true;
+}
+
+CStream *CAssetsManager::OpenAsset(const CString &data_file, const CString &asset_file, const CString &mode)
+{
+    if (_currentDataFile.Compare(data_file) != 0)
+    {
+        if (csetlib(const_cast<char*>(data_file.GetCStr()),"") != 0)
+        {
+            return NULL;
+        }
+        _currentDataFile = data_file;
+    }
+
+    FILE *f = clibfopen(const_cast<char*>(asset_file.GetCStr()),
+                        const_cast<char*>(mode.GetCStr()));
+    if (!f)
+    {
+        return NULL;
+    }
+
+    return CFileStream::CreateOwner(CFile::CreateOwner(f));
+}
+
+CStream *OpenAsset(const CString &data_file, const CString &asset_file);
 
 bool CAssetsManager::SetGameDataFileName()
 {
@@ -149,11 +204,12 @@ bool CAssetsManager::SetGameDataFileName()
 
 int CAssetsManager::InitGameDataExternal()
 {
+    const CEngineSetup &setup = CAGSEngine::GetSetup();
     // [IKM] If I understand this right, this method is called only when the game file name was specified
     // in cmdline, but not found
     int errcod = 0;
-    _gameDataFileName = ci_find_file(const_cast<char*>(_theSetup.DataFilesDir.GetCStr()),
-        const_cast<char*>(_theSetup.MainDataFilename.GetCStr()));
+    _gameDataFileName = ci_find_file(const_cast<char*>(setup.DataFilesDir.GetCStr()),
+        const_cast<char*>(setup.MainDataFilename.GetCStr()));
 
 #if !defined(WINDOWS_VERSION) && !defined(PSP_VERSION) && !defined(ANDROID_VERSION) && !defined(IOS_VERSION)
     // Search the exe files for the game data
@@ -195,7 +251,7 @@ int CAssetsManager::InitGameDataExternal()
     errcod=csetlib(const_cast<char*>(_gameDataFileName.GetCStr()),"");
     if (errcod) {
         //sprintf(gamefilenamebuf,"%s\\ac2game.ags",_theSetup.data_files_dir);
-        _gameDataFileName = ci_find_file(const_cast<char*>(_theSetup.DataFilesDir.GetCStr()), "ac2game.ags");
+        _gameDataFileName = ci_find_file(const_cast<char*>(setup.DataFilesDir.GetCStr()), "ac2game.ags");
         errcod = csetlib(const_cast<char*>(_gameDataFileName.GetCStr()),"");
     }
 
@@ -205,11 +261,15 @@ int CAssetsManager::InitGameDataExternal()
 HErr CAssetsManager::InitGameDataInternal()
 {
     // [IKM] .... is it all about this?
-    _theSetup.MainDataFilename = _gameDataFileName;
-    if (_theSetup.DataFilesDir.Compare(".") == 0)
+    // FIXME -- setup should be const
+    CEngineSetup &setup = CAGSEngine::GetSetup();
+    setup.MainDataFilename = _gameDataFileName;
+    if (setup.DataFilesDir.Compare(".") == 0)
     {
-        _theSetup.DataFilesDir = _gameDataDirectory;
+        setup.DataFilesDir = _gameDataDirectory;
     }
+
+    // ---- old code ------------------------------
 
     /*
     if (((strchr(game_file_name, '/') != NULL) ||
@@ -232,6 +292,73 @@ HErr CAssetsManager::InitGameDataInternal()
     }
     */
 
+    return Err::Nil();
+}
+
+HErr CAssetsManager::RegisterAdditionalDataFiles()
+{
+    CEngineSetup &setup = CAGSEngine::GetSetup();
+    AGSPlatformDriver *platform = AGSPlatformDriver::GetDriver();
+
+    HErr err;
+    if (setup.NoSpeechPack == 0)
+    {
+        err = RegisterDataFile("speech.vox", _speechFileName);
+        if (!err->IsNil())
+        {
+            platform->DisplayAlert("Unable to initialize speech file - check for corruption and that\nit belongs to this game.\n");
+            return Err::FromCode(EXIT_NORMAL);
+        }
+        platform->WriteConsole("Speech sample file found and initialized.\n");
+    }
+
+    _seperateMusicLib = false;
+    err = RegisterDataFile("music.vox", _musicFileName);
+    if (err->IsNil())
+    {
+        platform->WriteConsole("Audio vox found and initialized.\n");
+        _seperateMusicLib = true;
+    }
+
+    return Err::Nil();
+}
+
+HErr CAssetsManager::RegisterDataFile(const CString &data_file, CString &actual_file_path)
+{
+    CEngineSetup &setup = CAGSEngine::GetSetup();
+
+    /* Can't just use fopen here, since we need to change the filename
+    so that pack functions, etc. will have the right case later */
+    char *filename = ci_find_file(const_cast<char*>(setup.DataFilesDir.GetCStr()),
+                                  const_cast<char*>(data_file.GetCStr()));
+    /* Don't need to use ci_fopen here, because we've used ci_find_file to get
+    the case insensitive matched filename already */
+    // Use ci_fopen anyway because it can handle NULL filenames.
+    FILE *f = ci_fopen(filename, "rb");
+    if (f == NULL)
+    {
+        // In case they're running in debug, check Compiled folder
+        free(filename);
+        filename = ci_find_file("Compiled", const_cast<char*>(data_file.GetCStr()));
+        f = ci_fopen(filename, "rb");
+    }
+
+    if (f != NULL)
+    {
+        fclose(f);
+    }
+
+    if (!filename)
+    {
+        return Err::FromCode(0); // TODO: actual err code
+    }
+    actual_file_path = filename;
+    free(filename);
+    if (csetlib(const_cast<char*>(_speechFileName.GetCStr()),"")!=0)
+    {
+        return Err::FromCode(0); // TODO: actual err code
+    }
+    csetlib(const_cast<char*>(_gameDataFileName.GetCStr()),"");
     return Err::Nil();
 }
 

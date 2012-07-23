@@ -20,7 +20,7 @@ namespace Common
 {
 namespace Util
 {
-struct CStream;
+class CStream;
 class CKeyValueTree;
 } // namespace Util
 } // namespace Common
@@ -31,7 +31,7 @@ namespace Engine
 // Forward declarations
 namespace Util
 {
-struct CCmdArgs;
+class CCmdArgs;
 } // namespace Util
 
 namespace Core

@@ -25,9 +25,10 @@ using AGS::Common::Util::CString;
 
 enum SystemDeviceType
 {
+    kSystemDevice_Audio,
     kSystemDevice_Controller,
     kSystemDevice_Data,
-    kSystemDevice_Screen    
+    kSystemDevice_Screen
 };
 
 class ISystemDevice

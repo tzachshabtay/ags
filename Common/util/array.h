@@ -19,6 +19,8 @@ template<typename T> struct CArray
     T * arr;
     int count;
     int capacity;
+
+    T &operator[](int index) { return arr[index]; }
 };
 
 } // namespace Util

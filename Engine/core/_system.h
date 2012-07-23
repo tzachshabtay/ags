@@ -9,7 +9,6 @@
 #ifndef __AGS_EE_CORE__SYSTEM_H
 #define __AGS_EE_CORE__SYSTEM_H
 
-#include "Common/util/ptrarray.h"
 #include "Engine/device/device_keyboard.h"
 #include "Engine/device/device_mouse.h"
 #include "Engine/device/device_screen.h"
@@ -35,7 +34,6 @@ namespace Core
 class ISystemDevice;
 
 // Using-declarations
-using AGS::Common::Util::CPtrArray;
 using AGS::Engine::Device::CKeyboardDevice;
 using AGS::Engine::Device::CMouseDevice;
 using AGS::Engine::Device::CScreenDevice;

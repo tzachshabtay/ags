@@ -34,9 +34,23 @@ namespace Common
 namespace Util
 {
 
-CFile *CFile::Open(const CString &file_name, const CString &opt)
+/* static */ CFile *CFile::Open(const CString &file_name, const CString &opt)
 {
     return new CFile();
+}
+
+/* static */ CFile *CFile::CreateClient(FILE *f)
+{
+    return new CFile();
+}
+
+/* static */ CFile *CFile::CreateOwner(FILE *f)
+{
+    return new CFile();
+}
+
+CFile::CFile()
+{
 }
     
 } // namespace Util

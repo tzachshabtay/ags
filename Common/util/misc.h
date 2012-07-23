@@ -40,6 +40,10 @@
 #endif
 
 FILE *ci_fopen(char *file_name, const char *mode);
+// [IKM] TODO: remove this function later (or copy contents)
+// basically this function is no more needed here,
+// since we have our brand new AGS::Common::Util::Path namespace
+// with a set of various path helpers
 char *ci_find_file(char *dir_name, char *file_name);
 
 

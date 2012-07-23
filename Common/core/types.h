@@ -30,6 +30,8 @@ namespace AGS
     typedef long long int   int64_t;
 #endif
 
+    typedef unsigned char   byte;
+
 #ifndef intptr_t
 // [IKM] something like that... (based on JJS's explanation)
 #if defined (X64_BIT)
