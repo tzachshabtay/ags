@@ -54,7 +54,7 @@ HErr CSystem::Initialize()
 
     device = new CAllegroKeyboard();
     err = InstallDevice(device);
-    if (!err->IsNil()) {
+    if (!err.IsNil()) {
         delete device;
         return err;
     }
@@ -62,7 +62,7 @@ HErr CSystem::Initialize()
 
     device = new CAllegroMouse();
     err = InstallDevice(device);
-    if (!err->IsNil()) {
+    if (!err.IsNil()) {
         delete device;
         return err;
     }
@@ -70,7 +70,7 @@ HErr CSystem::Initialize()
 
     device = new CAllegroScreen();
     err = InstallDevice(device);
-    if (!err->IsNil()) {
+    if (!err.IsNil()) {
         delete device;
         return err;
     }
@@ -78,7 +78,7 @@ HErr CSystem::Initialize()
 
 	device = new CAllegroAudio();
     err = InstallDevice(device);
-    if (!err->IsNil()) {
+    if (!err.IsNil()) {
         delete device;
         return err;
     }

@@ -149,7 +149,7 @@ void CAGSEngine::DestroyInstance()
 HErr CAGSEngine::StartUpAndRun(const CCmdArgs &cmdargs)
 {
     HErr err = StartUp(cmdargs);
-    if (!err->IsNil())
+    if (!err.IsNil())
     {
         return err;
     }
@@ -175,7 +175,7 @@ HErr CAGSEngine::StartUp(const CCmdArgs &cmdargs)
     // setup.
     //
     HErr err = ProcessCmdArgs();
-    if (!err->IsNil())
+    if (!err.IsNil())
     {
         return err;
     }
@@ -276,13 +276,13 @@ HErr CAGSEngine::_StartUp()
         // Find and read configuration file, store the key-value pairs
         err = ReadConfigFile(&ini);
     }
-    if (!err->IsNil())
+    if (!err.IsNil())
     {
         return err;
     }
 
     err = ConfigureEngine(&ini);
-    if (!err->IsNil())
+    if (!err.IsNil())
     {
         return err;
     }
@@ -291,13 +291,13 @@ HErr CAGSEngine::_StartUp()
     // 6. Init Allegro and create application window
     //
     err = InitAllegro();
-    if (!err->IsNil())
+    if (!err.IsNil())
     {
         return err;
     }
 
     err = InitWindow();
-    if (!err->IsNil())
+    if (!err.IsNil())
     {
         return err;
     }
@@ -309,7 +309,7 @@ HErr CAGSEngine::_StartUp()
     if (_mustRunSetup)
     {
         err = RunSetup();
-        if (!err->IsNil())
+        if (!err.IsNil())
         {
             return err;
         }
@@ -333,7 +333,7 @@ HErr CAGSEngine::_StartUp()
     // 8. Create Engine components
     //
     err = CreateComponents();
-    if (!err->IsNil())
+    if (!err.IsNil())
     {
         return err;
     }
@@ -342,7 +342,7 @@ HErr CAGSEngine::_StartUp()
     // 9. Create and prepare game
     //
     err = CreateGame();
-    if (!err->IsNil())
+    if (!err.IsNil())
     {
         return err;
     }
@@ -356,7 +356,7 @@ HErr CAGSEngine::_RunLoop()
     while(true/*sort of...*/)
     {
         HErr err = Run();
-        if (!err->IsNil())
+        if (!err.IsNil())
         {
             return err;
         }
@@ -478,7 +478,7 @@ HErr CAGSEngine::ProcessCmdArgs()
 
     int _dataFileArgV = 0;
     for (int i = 1; i < _cmdArgs.GetCount(); ++i) {
-        if (_cmdArgs[i][1]=='?') return 0;
+        if (_cmdArgs[i][1]=='?') return Err::FromCode(0);
 #ifdef _DEBUG
         if ((_cmdArgs[i].Compare("--startr") == 0) && (i < _cmdArgs.GetCount()-1)) {
             override_start_room = _cmdArgs[i+1].ToInt();
@@ -681,13 +681,13 @@ HErr CAGSEngine::CreateComponents()
     //
     _theAssetsMgr = new CAssetsManager(_cmdArgs[_dataFileArgV], Path::GetCurrentDirectory());
     HErr err = _theAssetsMgr->RegisterGameData();
-    if (!err->IsNil()) {
+    if (!err.IsNil()) {
         return err;
     }
 
     _theSystem = new CSystem();
     err = _theSystem->Initialize();
-    if (!err->IsNil()) {
+    if (!err.IsNil()) {
         return err;
     }
 
@@ -703,7 +703,7 @@ HErr CAGSEngine::CreateComponents()
     /*-------------------------------*/
 
     err = CreateFontRenderers();
-    if (!err->IsNil()) {
+    if (!err.IsNil()) {
         return err;
     }
 

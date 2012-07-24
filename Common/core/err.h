@@ -20,24 +20,44 @@ namespace Core
 // Using-declarations
 using AGS::Common::Util::CString;
 
-struct CErrorHandle
+// CErrorHandle is a simple wrapper over reference-counted error
+// object, which is stored and managed internally by error-handling
+// system.
+// When reference count reaches zero, the error system is notified;
+// it then displays error and/or writes it to the application log.
+// This logic makes sure that an error created somewhere deep in the
+// nested functions won't get lost unnoticed.
+//
+// NOTE: currently a placeholder with no actual data
+class CErrorHandle
 {
-    void *err;
-
+public:
     // Safe check
-    inline bool IsNil() const { return this == NULL; }
+    inline bool IsNil() const { return err_obj == NULL; }
     inline int GetErrorCodeOrSomething() const { return -1; }
+
+    CErrorHandle()
+    {
+        err_obj = NULL;
+    }
+
+    CErrorHandle(const CErrorHandle &err)
+    {
+        err_obj = err.err_obj;
+    }
+private:
+    void *err_obj;
 };
 
 namespace Err
 {
 // "No error" object
-inline CErrorHandle *Nil()                               { return NULL; }
-inline CErrorHandle *FromCode   (int32_t err_code)       { return NULL; }
-inline CErrorHandle *FromString (const CString &err_msg) { return NULL; }
+inline CErrorHandle Nil()                               { return CErrorHandle(); }
+inline CErrorHandle FromCode   (int32_t err_code)       { return CErrorHandle(); }
+inline CErrorHandle FromString (const CString &err_msg) { return CErrorHandle(); }
 };
 
-typedef CErrorHandle *HErr;
+typedef CErrorHandle HErr;
 
 } // namespace Core
 } // namespace Common

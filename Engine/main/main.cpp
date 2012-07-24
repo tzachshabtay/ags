@@ -320,7 +320,7 @@ int main(int argc,char*argv[])
     //
     CCmdArgs cmd_args;
     err = cmd_args.ParseCmdLine(argc, argv);
-    if (!err->IsNil())
+    if (!err.IsNil())
     {
         return 0; // TODO proper error code here
     }
@@ -347,7 +347,7 @@ int main(int argc,char*argv[])
     // 3. Create the Engine
     // 
     err = CAGSEngine::CreateInstance();
-    if (!err->IsNil())
+    if (!err.IsNil())
     {
         return 0; // TODO proper error code here
     }
@@ -361,13 +361,13 @@ int main(int argc,char*argv[])
     //-----------------------------------------------------
     // 5. Program end
     // 
-    if (err->IsNil())
+    if (err.IsNil())
     {
         return 0;
     }
     else
     {
-        return err->GetErrorCodeOrSomething();
+        return err.GetErrorCodeOrSomething();
     }
 }
 

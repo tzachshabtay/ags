@@ -40,13 +40,13 @@ HErr CAGSGame::Initialize()
     InitGameState();
 
     HErr err = InitRooms();
-    if (!err->IsNil())
+    if (!err.IsNil())
     {
         return err;
     }
 
     err = InitSpeech();
-    if (!err->IsNil())
+    if (!err.IsNil())
     {
         return err;
     }

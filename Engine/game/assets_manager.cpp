@@ -94,7 +94,7 @@ HErr CAssetsManager::RegisterGameData()
         return Err::FromCode(EXIT_NORMAL);
     }
 
-    if (!err->IsNil()) {
+    if (!err.IsNil()) {
         return err;
     }
 
@@ -304,7 +304,7 @@ HErr CAssetsManager::RegisterAdditionalDataFiles()
     if (setup.NoSpeechPack == 0)
     {
         err = RegisterDataFile("speech.vox", _speechFileName);
-        if (!err->IsNil())
+        if (!err.IsNil())
         {
             platform->DisplayAlert("Unable to initialize speech file - check for corruption and that\nit belongs to this game.\n");
             return Err::FromCode(EXIT_NORMAL);
@@ -314,7 +314,7 @@ HErr CAssetsManager::RegisterAdditionalDataFiles()
 
     _seperateMusicLib = false;
     err = RegisterDataFile("music.vox", _musicFileName);
-    if (err->IsNil())
+    if (err.IsNil())
     {
         platform->WriteConsole("Audio vox found and initialized.\n");
         _seperateMusicLib = true;
