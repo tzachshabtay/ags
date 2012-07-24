@@ -18,7 +18,7 @@ CAudioDevice::~CAudioDevice()
 
 SystemDeviceType CAudioDevice::GetType()
 {
-    return SystemDeviceType::kSystemDevice_Audio;
+    return kSystemDevice_Audio;
 }
 
 } // namespace Device

@@ -18,7 +18,7 @@ CScreenDevice::~CScreenDevice()
 
 SystemDeviceType CScreenDevice::GetType()
 {
-    return SystemDeviceType::kSystemDevice_Screen;
+    return kSystemDevice_Screen;
 }
 
 IGraphicsDriver *CScreenDevice::GetGraphicsDriver()

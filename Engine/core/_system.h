@@ -9,6 +9,7 @@
 #ifndef __AGS_EE_CORE__SYSTEM_H
 #define __AGS_EE_CORE__SYSTEM_H
 
+#include "Engine/device/device_audio.h"
 #include "Engine/device/device_keyboard.h"
 #include "Engine/device/device_mouse.h"
 #include "Engine/device/device_screen.h"
@@ -22,6 +23,8 @@ namespace Engine
 // Forward declarations
 namespace Device
 {
+class ISystemDevice;
+class CAudioDevice;
 class CKeyboardDevice;
 class CMouseDevice;
 class CScreenDevice;
@@ -30,10 +33,10 @@ class CScreenDevice;
 namespace Core
 {
 
-// Forward declarations
-class ISystemDevice;
-
 // Using-declarations
+using AGS::Common::Core::HErr;
+using AGS::Engine::Device::ISystemDevice;
+using AGS::Engine::Device::CAudioDevice;
 using AGS::Engine::Device::CKeyboardDevice;
 using AGS::Engine::Device::CMouseDevice;
 using AGS::Engine::Device::CScreenDevice;
@@ -61,6 +64,7 @@ protected:
 private:
 
     ScriptSystem        _scriptSystem;
+	CAudioDevice		*_deviceAudio;
     CKeyboardDevice     *_deviceKeyboard;
     CMouseDevice        *_deviceMouse;
     CScreenDevice       *_deviceScreen;

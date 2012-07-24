@@ -18,7 +18,7 @@ CMouseDevice::~CMouseDevice()
 
 SystemDeviceType CMouseDevice::GetType()
 {
-    return SystemDeviceType::kSystemDevice_Controller;
+    return kSystemDevice_Controller;
 }
 
 } // namespace Device

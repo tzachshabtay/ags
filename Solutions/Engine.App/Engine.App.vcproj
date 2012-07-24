@@ -2150,6 +2150,10 @@
 					RelativePath="..\..\Engine\device\mousew32.h"
 					>
 				</File>
+				<File
+					RelativePath="..\..\Engine\device\system_device.h"
+					>
+				</File>
 			</Filter>
 		</Filter>
 		<Filter

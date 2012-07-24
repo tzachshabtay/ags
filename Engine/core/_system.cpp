@@ -1,5 +1,6 @@
 
 #include "Engine/core/_system.h"
+#include "Engine/device/allegro_audio.h"
 #include "Engine/device/allegro_keyboard.h"
 #include "Engine/device/allegro_mouse.h"
 #include "Engine/device/allegro_screen.h"
@@ -12,6 +13,7 @@ namespace Core
 {
 
 // Using-declarations
+using AGS::Engine::Device::CAllegroAudio;
 using AGS::Engine::Device::CAllegroKeyboard;
 using AGS::Engine::Device::CAllegroMouse;
 using AGS::Engine::Device::CAllegroScreen;
@@ -73,10 +75,21 @@ HErr CSystem::Initialize()
         return err;
     }
     _deviceScreen = (CScreenDevice*)device;
+
+	device = new CAllegroAudio();
+    err = InstallDevice(device);
+    if (!err->IsNil()) {
+        delete device;
+        return err;
+    }
+    _deviceAudio = (CAudioDevice*)device;
+
+	return Err::Nil();
 }
 
 void CSystem::Shutdown()
 {
+	RemoveDevice(_deviceAudio);
     RemoveDevice(_deviceScreen);
     RemoveDevice(_deviceKeyboard);
     RemoveDevice(_deviceMouse);

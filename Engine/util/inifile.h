@@ -18,7 +18,7 @@ namespace Common
 {
 namespace Util
 {
-struct CStream;
+class CStream;
 } // namespace Util
 } // namespace Common
 

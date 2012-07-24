@@ -9,7 +9,7 @@
 #ifndef __AGS_EE_DEVICE__DEVICESCREEN_H
 #define __AGS_EE_DEVICE__DEVICESCREEN_H
 
-#include "Engine/core/system_device.h"
+#include "Engine/device/system_device.h"
 
 // Forward declarations
 class IGraphicsDriver;
@@ -21,11 +21,6 @@ namespace Engine
 {
 namespace Device
 {
-
-// Using-declarations
-using AGS::Common::Core::HErr;
-using AGS::Engine::Core::SystemDeviceType;
-using AGS::Engine::Core::ISystemDevice;
 
 class CScreenDevice : public ISystemDevice
 {

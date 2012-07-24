@@ -6,8 +6,8 @@
 // [IKM] 2012-07-19: draft version
 //
 //=============================================================================
-#ifndef __AGS_EE_CORE__SYSTEMDEVICE_H
-#define __AGS_EE_CORE__SYSTEMDEVICE_H
+#ifndef __AGS_EE_DEVICE__SYSTEMDEVICE_H
+#define __AGS_EE_DEVICE__SYSTEMDEVICE_H
 
 #include "Common/core/err.h"
 #include "Common/util/string.h"
@@ -16,7 +16,7 @@ namespace AGS
 {
 namespace Engine
 {
-namespace Core
+namespace Device
 {
 
 // Using-declarations
@@ -45,8 +45,8 @@ public:
     virtual HErr                Poll()      = 0;
 };
 
-} // namespace Core
+} // namespace Device
 } // namespace Engine
 } // namespace AGS
 
-#endif // __AGS_EE_CORE__SYSTEMDEVICE_H
+#endif // __AGS_EE_DEVICE__SYSTEMDEVICE_H
