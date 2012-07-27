@@ -33,6 +33,33 @@ public:
     virtual HErr                Install();
     virtual HErr                Remove();
     virtual HErr                Poll();
+
+    virtual MouseButtons        GetInstalledButtons() const;
+    virtual MouseButtons        GetPressedButtons() const;
+    virtual HErr                SetConfineBox(const CRect &rc);
+    virtual CRect               GetConfineBox() const;
+    virtual HErr                SetMouseLimits(const CRect &rc);
+    virtual CRect               GetMouseLimits() const;
+    virtual HErr                SetMousePos(const CPoint &pt);
+    virtual CPoint              GetMousePos() const;
+
+protected:
+
+    void                        UpdateMousePosition();
+    void                        UpdateMouseButtons();
+
+private:
+
+    CRect           _confineBox;
+    CRect           _boundsBox;
+    CPoint          _mousePos;
+    CPoint          _mouseOldPos;
+    MouseButtons    _buttonsInstalled;
+    MouseButtons    _buttonsPressed;
+    MouseButtons    _buttonsWerePressed;
+
+    bool            _disableGetMousePos;
+    bool            _ignoreBounds;
 };
 
 } // namespace Device

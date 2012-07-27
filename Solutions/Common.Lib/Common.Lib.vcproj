@@ -536,6 +536,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Common\util\math.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Common\util\memorystream.h"
 					>
 				</File>
@@ -549,6 +553,10 @@
 				</File>
 				<File
 					RelativePath="..\..\Common\util\ptrarray.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\util\set.h"
 					>
 				</File>
 				<File

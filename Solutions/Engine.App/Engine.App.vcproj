@@ -2078,10 +2078,6 @@
 					RelativePath="..\..\Engine\core\engine_setup.h"
 					>
 				</File>
-				<File
-					RelativePath="..\..\Engine\core\system_device.h"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="util"
@@ -2144,6 +2140,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Engine\device\device_screen.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\device\mouse_callbacks.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\device\mouse_defines.h"
 					>
 				</File>
 				<File

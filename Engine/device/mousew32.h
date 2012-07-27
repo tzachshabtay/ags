@@ -20,9 +20,15 @@ void msetcallback(IMouseGetPosCallback *gpCallback);
 void mgraphconfine(int x1, int y1, int x2, int y2);
 void mgetgraphpos();
 void msetcursorlimit(int x1, int y1, int x2, int y2);
+//----------------------------
 void drawCursor();
+//----------------------------
+
 void domouse(int str);
+
+// [IKM] totally redundant; replace with e.g. IsPointInRect(device.GetMousePos())
 int ismouseinbox(int lf, int tp, int rt, int bt);
+
 void mfreemem();
 void mnewcursor(char cursno);
 void mloadwcursor(char *namm);

@@ -77,57 +77,27 @@ extern color palette[256];
 IMouseGetPosCallback *callback = NULL;
 
 void msetcallback(IMouseGetPosCallback *gpCallback) {
-  callback = gpCallback;
+  
 }
 
 void mgraphconfine(int x1, int y1, int x2, int y2)
 {
-  set_mouse_range(x1, y1, x2, y2);
+  
 }
 
 void mgetgraphpos()
 {
-  poll_mouse();
-  if (!disable_mgetgraphpos) {
-    mousex = mouse_x;
-    mousey = mouse_y;
-  }
-
-  if (!ignore_bounds) {
-
-    if (mousex < boundx1) {
-      mousex = boundx1;
-      msetgraphpos(mousex, mousey);
-    }
-    if (mousey < boundy1) {
-      mousey = boundy1;
-      msetgraphpos(mousex, mousey);
-    }
-    if (mousex > boundx2) {
-      mousex = boundx2;
-      msetgraphpos(mousex, mousey);
-    }
-    if (mousey > boundy2) {
-      mousey = boundy2;
-      msetgraphpos(mousex, mousey);
-    }
-
-  }
-
-  if ((callback) && (!disable_mgetgraphpos))
-    callback->AdjustPosition(&mousex, &mousey);
+  
 }
 
 void msetcursorlimit(int x1, int y1, int x2, int y2)
 {
-  // like graphconfine, but don't actually pass it to the driver
-  // - stops the Windows cursor showing when out of the area
-  boundx1 = x1;
-  boundy1 = y1;
-  boundx2 = x2;
-  boundy2 = y2;
+  
 }
 
+// [IKM] TODO: move this code to game's CMouseCursor class
+// or something like that; device class should not touch
+// any cursor types and sprites at all
 void drawCursor() {
   if (alpha_blend_cursor) {
     set_alpha_blender();
@@ -137,6 +107,7 @@ void drawCursor() {
     put_sprite_256(mousex, mousey, mousecurs[currentcursor]);
 }
 
+// [IKM] probably move this to game's CMouseCursor
 int hotxwas = 0, hotywas = 0;
 void domouse(int str)
 {
@@ -189,6 +160,7 @@ void domouse(int str)
   hotywas = hoty;
 }
 
+// [IKM] redundant
 int ismouseinbox(int lf, int tp, int rt, int bt)
 {
   if ((mousex >= lf) & (mousex <= rt) & (mousey >= tp) & (mousey <= bt))
@@ -197,6 +169,7 @@ int ismouseinbox(int lf, int tp, int rt, int bt)
     return FALSE;
 }
 
+// [IKM] Not needed because we will use classes for bitmaps and cursors
 void mfreemem()
 {
   for (int re = 0; re < numcurso; re++) {
@@ -205,6 +178,7 @@ void mfreemem()
   }
 }
 
+// [IKM] probably move this to game's CMouseCursor
 void mnewcursor(char cursno)
 {
   domouse(2);
@@ -212,7 +186,8 @@ void mnewcursor(char cursno)
   domouse(1);
 }
 
-
+// [IKM] loading sprites should be done totally different way;
+// anyway this is to be moved to game's CMouseCursor
 void mloadwcursor(char *namm)
 {
   color dummypal[256];
@@ -225,24 +200,10 @@ void mloadwcursor(char *namm)
 int butwas = 0;
 int mgetbutton()
 {
-  int toret = NONE;
-  poll_mouse();
-  int butis = mouse_b;
-
-  if ((butis > 0) & (butwas > 0))
-    return NONE;  // don't allow holding button down
-
-  if (butis & 1)
-    toret = LEFT;
-  else if (butis & 2)
-    toret = RIGHT;
-  else if (butis & 4)
-    toret = MIDDLE;
-
-  butwas = butis;
-  return toret;
+    return 0;
 }
 
+// [IKM] redundant, use CMouseDevice::GetPressedButtons() & kMB_*
 const int MB_ARRAY[3] = { 1, 2, 4 };
 int misbuttondown(int buno)
 {
@@ -254,9 +215,10 @@ int misbuttondown(int buno)
 
 void msetgraphpos(int xa, int ya)
 { 
-  position_mouse(xa, ya); // xa -= hotx; ya -= hoty;
+  
 }
 
+// [IKM] move this to game's CMouseCursor
 void msethotspot(int xx, int yy)
 {
   hotx = xx;  // mousex -= hotx; mousey -= hoty;
@@ -265,13 +227,5 @@ void msethotspot(int xx, int yy)
 
 int minstalled()
 {
-  int nbuts;
-  if ((nbuts = install_mouse()) < 1)
-    return 0;
-
-  mgraphconfine(0, 0, 319, 199);  // use 320x200 co-ord system
-  if (nbuts < 2)
-    nbuts = 2;
-
-  return nbuts;
+  return 0;
 }
