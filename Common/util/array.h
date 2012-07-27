@@ -4,8 +4,8 @@
 // [IKM] 2012-07-09: placeholder for the array class
 //
 //=============================================================================
-#ifndef __AGS_CN_UTILS__ARRAY_H
-#define __AGS_CN_UTILS__ARRAY_H
+#ifndef __AGS_CN_UTIL__ARRAY_H
+#define __AGS_CN_UTIL__ARRAY_H
 
 namespace AGS
 {
@@ -27,4 +27,4 @@ template<typename T> struct CArray
 } // namespace Common
 } // namespace AGS
 
-#endif // __AGS_CN_UTILS__ARRAY_H
+#endif // __AGS_CN_UTIL__ARRAY_H

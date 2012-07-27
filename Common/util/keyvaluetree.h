@@ -6,8 +6,8 @@
 // structure managers.
 //
 //=============================================================================
-#ifndef __AGS_CN_UTILS__KEYVALUETREE_H
-#define __AGS_CN_UTILS__KEYVALUETREE_H
+#ifndef __AGS_CN_UTIL__KEYVALUETREE_H
+#define __AGS_CN_UTIL__KEYVALUETREE_H
 
 #include "Common/core/err.h"
 #include "Common/util/string.h"
@@ -67,4 +67,4 @@ public:
 } // namespace Common
 } // namespace AGS
 
-#endif // __AGS_CN_UTILS__KEYVALUETREE_H
+#endif // __AGS_CN_UTIL__KEYVALUETREE_H

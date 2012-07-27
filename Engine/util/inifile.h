@@ -4,8 +4,8 @@
 // [IKM] 2012-07-09: ini file reader/writer draft
 //
 //=============================================================================
-#ifndef __AGS_EE_UTILS__INIFILE_H
-#define __AGS_EE_UTILS__INIFILE_H
+#ifndef __AGS_EE_UTIL__INIFILE_H
+#define __AGS_EE_UTIL__INIFILE_H
 
 #include "Common/core/err.h"
 #include "Common/util/keyvaluetree.h"
@@ -53,4 +53,4 @@ public:
 } // namespace Engine
 } // namespace AGS
 
-#endif // __AGS_EE_UTILS__INIFILE_H
+#endif // __AGS_EE_UTIL__INIFILE_H

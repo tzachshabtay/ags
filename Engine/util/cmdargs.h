@@ -4,8 +4,8 @@
 // [IKM] 2012-07-10: cmdargs helper draft/placeholder
 //
 //=============================================================================
-#ifndef __AGS_EE_UTILS__CMDARGS_H
-#define __AGS_EE_UTILS__CMDARGS_H
+#ifndef __AGS_EE_UTIL__CMDARGS_H
+#define __AGS_EE_UTIL__CMDARGS_H
 
 #include "Common/core/err.h"
 #include "Common/util/string.h"
@@ -59,4 +59,4 @@ public:
 } // namespace Engine
 } // namespace AGS
 
-#endif // __AGS_EE_UTILS__CMDARGS_H
+#endif // __AGS_EE_UTIL__CMDARGS_H

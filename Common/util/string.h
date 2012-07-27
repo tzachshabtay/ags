@@ -4,8 +4,8 @@
 // [IKM] 2012-07-09: placeholder for the string class
 //
 //=============================================================================
-#ifndef __AGS_CN_UTILS__STRING_H
-#define __AGS_CN_UTILS__STRING_H
+#ifndef __AGS_CN_UTIL__STRING_H
+#define __AGS_CN_UTIL__STRING_H
 
 #include "Common/core/types.h"
 
@@ -56,4 +56,4 @@ public:
 } // namespace Common
 } // namespace AGS
 
-#endif // __AGS_CN_UTILS__STRING_H
+#endif // __AGS_CN_UTIL__STRING_H

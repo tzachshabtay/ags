@@ -4,8 +4,8 @@
 // [IKM] 2012-07-09: placeholder for the ptr array class
 //
 //=============================================================================
-#ifndef __AGS_CN_UTILS__PTRARRAY_H
-#define __AGS_CN_UTILS__PTRARRAY_H
+#ifndef __AGS_CN_UTIL__PTRARRAY_H
+#define __AGS_CN_UTIL__PTRARRAY_H
 
 namespace AGS
 {
@@ -25,4 +25,4 @@ template<typename T> struct CPtrArray
 } // namespace Common
 } // namespace AGS
 
-#endif // __AGS_CN_UTILS__PTRARRAY_H
+#endif // __AGS_CN_UTIL__PTRARRAY_H

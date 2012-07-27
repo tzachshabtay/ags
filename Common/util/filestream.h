@@ -4,8 +4,8 @@
 // [IKM] 2012-07-09: placeholder for the filestream class
 //
 //=============================================================================
-#ifndef __AGS_CN_UTILS__FILESTREAM_H
-#define __AGS_CN_UTILS__FILESTREAM_H
+#ifndef __AGS_CN_UTIL__FILESTREAM_H
+#define __AGS_CN_UTIL__FILESTREAM_H
 
 #include "Common/util/stream.h"
 #include "Common/util/file.h"
@@ -62,4 +62,4 @@ private:
 } // namespace Common
 } // namespace AGS
 
-#endif // __AGS_CN_UTILS__FILESTREAM_H
+#endif // __AGS_CN_UTIL__FILESTREAM_H
