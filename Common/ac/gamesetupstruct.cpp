@@ -4,6 +4,9 @@
 #include "ac/common.h"
 #include "util/string_utils.h"      // fputstring, etc
 
+#include "Common/util/stream.h"
+namespace Err = AGS::Common::Core::Err;
+
 
 // Create the missing audioClips data structure for 3.1.x games.
 // This is done by going through the data files and adding all music*.*
@@ -93,6 +96,21 @@ void GameSetupStruct::ReadFromFile_Part3(FILE *iii, GAME_STRUCT_READ_DATA &read_
     read_customprops(iii, read_data);
     read_audio(iii, read_data);
     read_room_names(iii, read_data);
+}
+
+HErr GameSetupStruct::ReadFromStream_Part1(CStream *in, GAME_STRUCT_READ_DATA &read_data)
+{
+    return Err::Nil();
+}
+
+HErr GameSetupStruct::ReadFromStream_Part2(CStream *in, GAME_STRUCT_READ_DATA &read_data)
+{
+    return Err::Nil();
+}
+
+HErr GameSetupStruct::ReadFromStream_Part3(CStream *in, GAME_STRUCT_READ_DATA &read_data)
+{
+    return Err::Nil();
 }
 
 //-----------------------------------------------------------------------------

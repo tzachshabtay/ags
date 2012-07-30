@@ -5,6 +5,9 @@
 #include "util/wgt2allg.h"
 #include "font/agsfontrenderer.h"	// fontRenderers;
 
+
+namespace Err = AGS::Common::Core::Err;
+
 DynamicArray<GUITextBox> guitext;
 int numguitext = 0;
 
@@ -24,6 +27,16 @@ void GUITextBox::ReadFromFile(FILE * ooo, int version)
   fread(&font, sizeof(int), 3, ooo);
   if (textcol == 0)
     textcol = 16;
+}
+
+HErr GUITextBox::Read(CStream *in, int gui_data_version)
+{
+    return Err::Nil();
+}
+
+HErr GUITextBox::Write(CStream *out, int gui_data_version)
+{
+    return Err::Nil();
 }
 
 void GUITextBox::Draw()

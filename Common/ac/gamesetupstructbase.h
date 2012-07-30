@@ -51,6 +51,9 @@ struct GameSetupStructBase {
 
     void ReadFromFile(FILE *fp);
     void WriteToFile(FILE *fp);
+
+    HErr Read(CStream *in);
+    HErr Write(CStream *out);
 };
 
 #endif // __AGS_CN_AC__GAMESETUPSTRUCTBASE_H

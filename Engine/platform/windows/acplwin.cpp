@@ -105,7 +105,8 @@ struct AGSWin32 : AGS32BitOSDriver {
   virtual void UnRegisterGameWithGameExplorer();
   virtual int  ConvertKeycodeToScanCode(int keyCode);
 
-  virtual void ReadPluginsFromDisk(FILE *);
+  //virtual void ReadPluginsFromDisk(FILE *);
+  virtual HErr ReadPluginsFromDisk(CStream *in);
   virtual void StartPlugins();
   virtual int  RunPluginHooks(int event, int data);
   virtual void RunPluginInitGfxHooks(const char *driverName, void *data);
@@ -764,8 +765,9 @@ void AGSWin32::ShutdownCDPlayer() {
   cd_exit();
 }
 
-void AGSWin32::ReadPluginsFromDisk(FILE *iii) {
-  pl_read_plugins_from_disk(iii);
+//void AGSWin32::ReadPluginsFromDisk(FILE *iii) {
+HErr AGSWin32::ReadPluginsFromDisk(CStream *in) {
+  return pl_read_plugins_from_disk(in);
 }
 
 void AGSWin32::StartPlugins() {

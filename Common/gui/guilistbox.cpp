@@ -7,6 +7,8 @@
 #include "font/fonts.h"
 #include "util/wgt2allg.h"
 
+namespace Err = AGS::Common::Core::Err;
+
 DynamicArray<GUIListBox> guilist;
 int numguilist = 0;
 
@@ -88,6 +90,16 @@ void GUIListBox::ReadFromFile(FILE * ooo, int version)
 
   if (textcol == 0)
     textcol = 16;
+}
+
+HErr GUIListBox::Read(CStream *in, int gui_data_version)
+{
+    return Err::Nil();
+}
+
+HErr GUIListBox::Write(CStream *out, int gui_data_version)
+{
+    return Err::Nil();
 }
 
 int GUIListBox::AddItem(const char *toadd)

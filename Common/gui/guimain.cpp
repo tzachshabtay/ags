@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "gui/guimain.h"
 #include "util/wgt2allg.h"
+#include "gui/guimain.h"
 #include "ac/common.h"	// quit()
 #include "ac/gamesetupstruct.h"
 #include "gui/guibutton.h"
@@ -15,6 +15,8 @@
 #include "gui/guilistbox.h"
 #include "font/fonts.h"
 #include "ac/spritecache.h"
+
+namespace Err = AGS::Common::Core::Err;
 
 extern SpriteCache spriteset;
 
@@ -145,16 +147,16 @@ bool GUIMain::is_alpha()
 
 void GUIMain::resort_zorder()
 {
-  int ff;
+  int i;
   GUIObject *controlArray[MAX_OBJS_ON_GUI];
   
-  for (ff = 0; ff < numobjs; ff++)
-    controlArray[ff] = objs[ff];
+  for (i = 0; i < numobjs; i++)
+    controlArray[i] = objs[i];
   
   qsort(&controlArray, numobjs, sizeof(GUIObject*), compare_guicontrolzorder);
 
-  for (ff = 0; ff < numobjs; ff++)
-    drawOrder[ff] = controlArray[ff]->objn;
+  for (i = 0; i < numobjs; i++)
+    drawOrder[i] = controlArray[i]->objn;
 }
 
 bool GUIMain::bring_to_front(int objNum) {
@@ -197,32 +199,32 @@ bool GUIMain::send_to_back(int objNum) {
 
 void GUIMain::rebuild_array()
 {
-  int ff, thistype, thisnum;
+  int i, thistype, thisnum;
 
-  for (ff = 0; ff < numobjs; ff++) {
-    thistype = (objrefptr[ff] >> 16) & 0x000ffff;
-    thisnum = objrefptr[ff] & 0x0000ffff;
+  for (i = 0; i < numobjs; i++) {
+    thistype = (objrefptr[i] >> 16) & 0x000ffff;
+    thisnum = objrefptr[i] & 0x0000ffff;
 
     if ((thisnum < 0) || (thisnum >= 2000))
       quit("GUIMain: rebuild array failed (invalid object index)");
 
     if (thistype == GOBJ_BUTTON)
-      objs[ff] = &guibuts[thisnum];
+      objs[i] = &guibuts[thisnum];
     else if (thistype == GOBJ_LABEL)
-      objs[ff] = &guilabels[thisnum];
+      objs[i] = &guilabels[thisnum];
     else if (thistype == GOBJ_INVENTORY)
-      objs[ff] = &guiinv[thisnum];
+      objs[i] = &guiinv[thisnum];
     else if (thistype == GOBJ_SLIDER)
-      objs[ff] = &guislider[thisnum];
+      objs[i] = &guislider[thisnum];
     else if (thistype == GOBJ_TEXTBOX)
-      objs[ff] = &guitext[thisnum];
+      objs[i] = &guitext[thisnum];
     else if (thistype == GOBJ_LISTBOX)
-      objs[ff] = &guilist[thisnum];
+      objs[i] = &guilist[thisnum];
     else
       quit("guimain: unknown control type found on gui");
 
-    objs[ff]->guin = this->guiId;
-    objs[ff]->objn = ff;
+    objs[i]->guin = this->guiId;
+    objs[i]->objn = i;
   }
 
   resort_zorder();
@@ -456,119 +458,7 @@ void GUIMain::mouse_but_up()
 
 void read_gui(FILE * iii, GUIMain * guiread, GameSetupStruct * gss, GUIMain** allocate)
 {
-  int gver, ee;
-
-  if (getw(iii) != (int)GUIMAGIC)
-    quit("read_gui: file is corrupt");
-
-  gver = getw(iii);
-  if (gver < 100) {
-    gss->numgui = gver;
-    gver = 0;
-  }
-  else if (gver > GUI_VERSION)
-    quit("read_gui: this game requires a newer version of AGS");
-  else
-    gss->numgui = getw(iii);
-
-  if ((gss->numgui < 0) || (gss->numgui > 1000))
-    quit("read_gui: invalid number of GUIs, file corrupt?");
-
-  if (allocate != NULL)
-  {
-    *allocate = (GUIMain*)malloc(sizeof(GUIMain) * gss->numgui);
-    guiread = *allocate;
-  }
-
-  // import the main GUI elements
-  for (int iteratorCount = 0; iteratorCount < gss->numgui; ++iteratorCount)
-  {
-    guiread[iteratorCount].init();
-    guiread[iteratorCount].ReadFromFile(iii, gver);
-  }
-
-  for (ee = 0; ee < gss->numgui; ee++) {
-    if (guiread[ee].hit < 2)
-      guiread[ee].hit = 2;
-
-    if (gver < 103)
-      sprintf(guiread[ee].name, "GUI%d", ee);
-    if (gver < 105)
-      guiread[ee].zorder = ee;
-
-    if (loaded_game_file_version <= 32) // Fix names for 2.x: "GUI" -> "gGui"
-        guiread->FixupGuiName(guiread[ee].name);
-
-    guiread[ee].guiId = ee;
-  }
-
-  // import the buttons
-  numguibuts = getw(iii);
-  guibuts.SetSizeTo(numguibuts);
-
-  for (ee = 0; ee < numguibuts; ee++)
-    guibuts[ee].ReadFromFile(iii, gver);
-
-  // labels
-  numguilabels = getw(iii);
-  guilabels.SetSizeTo(numguilabels);
-
-  for (ee = 0; ee < numguilabels; ee++)
-    guilabels[ee].ReadFromFile(iii, gver);
-
-  // inv controls
-  numguiinv = getw(iii);
-  guiinv.SetSizeTo(numguiinv);
-
-  for (ee = 0; ee < numguiinv; ee++)
-    guiinv[ee].ReadFromFile(iii, gver);
-
-  if (gver >= 100) {
-    // sliders
-    numguislider = getw(iii);
-    guislider.SetSizeTo(numguislider);
-
-    for (ee = 0; ee < numguislider; ee++)
-      guislider[ee].ReadFromFile(iii, gver);
-  }
-
-  if (gver >= 101) {
-    // text boxes
-    numguitext = getw(iii);
-    guitext.SetSizeTo(numguitext);
-
-    for (ee = 0; ee < numguitext; ee++)
-      guitext[ee].ReadFromFile(iii, gver);
-  }
-
-  if (gver >= 102) {
-    // list boxes
-    numguilist = getw(iii);
-    guilist.SetSizeTo(numguilist);
-
-    for (ee = 0; ee < numguilist; ee++)
-      guilist[ee].ReadFromFile(iii, gver);
-  }
-
-  // set up the reverse-lookup array
-  for (ee = 0; ee < gss->numgui; ee++) {
-    guiread[ee].rebuild_array();
-
-    if (gver < 110)
-      guiread[ee].clickEventHandler[0] = 0;
-
-    for (int ff = 0; ff < guiread[ee].numobjs; ff++) {
-      guiread[ee].objs[ff]->guin = ee;
-      guiread[ee].objs[ff]->objn = ff;
-
-      if (gver < 115)
-        guiread[ee].objs[ff]->zorder = ff;
-    }
-
-    guiread[ee].resort_zorder();
-  }
-
-  guis_need_update = 1;
+  
 }
 
 void write_gui(FILE * ooo, GUIMain * guiwrite, GameSetupStruct * gss)
@@ -607,4 +497,54 @@ void write_gui(FILE * ooo, GUIMain * guiwrite, GameSetupStruct * gss)
   putw(numguilist, ooo);
   for (ee = 0; ee < numguilist; ee++)
     guilist[ee].WriteToFile(ooo);
+}
+
+HErr GUIMain::Read(CStream *in, int game_data_version, int gui_data_version, int gui_id)
+{
+    return PostReadInit(game_data_version, gui_data_version, gui_id);
+}
+
+HErr GUIMain::Write(CStream *out, int game_data_version, int gui_data_version)
+{
+    return Err::Nil();
+}
+
+HErr GUIMain::RebuildChildArray(int gui_data_version)
+{
+    rebuild_array();
+
+    if (gui_data_version < 110)
+        clickEventHandler[0] = 0;
+
+    for (int i = 0; i < numobjs; i++) {
+        objs[i]->guin = guiId;
+        objs[i]->objn = i;
+
+        if (gui_data_version < 115)
+            objs[i]->zorder = i;
+    }
+
+    resort_zorder();
+
+    return Err::Nil();
+}
+
+HErr GUIMain::PostReadInit(int game_data_version, int gui_data_version, int gui_id)
+{
+    if (hit < 2)
+        hit = 2;
+
+    if (gui_data_version < 103)
+        sprintf(name, "GUI%d", gui_id);
+    if (gui_data_version < 105)
+        zorder = gui_id;
+
+    if (game_data_version <= 32) // Fix names for 2.x: "GUI" -> "gGui"
+    {
+        FixupGuiName(name);
+    }
+
+    guiId = gui_id;
+
+    return Err::Nil();
 }

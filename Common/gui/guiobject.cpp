@@ -5,6 +5,8 @@
 #include "util/string_utils.h"  // fputstring, etc
 #include "ac/common.h"		// quit()
 
+namespace Err = AGS::Common::Core::Err;
+
 void GUIObject::init() {
   int jj;
   scriptName[0] = 0;
@@ -53,4 +55,14 @@ void GUIObject::ReadFromFile(FILE * ooo, int version)
     for (kk = 0; kk < numev; kk++)
       fgetstring_limit(eventHandlers[kk], ooo, MAX_GUIOBJ_EVENTHANDLER_LEN + 1);
   }
+}
+
+HErr GUIObject::Read(CStream *in, int gui_data_version)
+{
+    return Err::Nil();
+}
+
+HErr GUIObject::Write(CStream *out, int gui_data_version)
+{
+    return Err::Nil();
 }

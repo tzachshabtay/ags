@@ -69,8 +69,8 @@ public:
     AssetsSearchPriority GetSearchPriority() const;
     bool                 SetSearchPriority(AssetsSearchPriority pr);
 
+    CStream *OpenAsset(const CString &asset_file, const CString &mode);
     CStream *OpenAsset(const CString &data_file, const CString &asset_file, const CString &mode);
-
 
     bool    _seperateMusicLib; // CHECKME: probably redundant
 

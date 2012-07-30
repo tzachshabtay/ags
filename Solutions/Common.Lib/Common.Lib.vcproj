@@ -250,6 +250,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Common\gui\guimanager.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Common\gui\guiobject.cpp"
 					>
 				</File>
@@ -492,6 +496,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Common\gui\guimanager.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Common\gui\guiobject.h"
 					>
 				</File>
@@ -533,6 +541,10 @@
 				</File>
 				<File
 					RelativePath="..\..\Common\util\lzw.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Common\util\map.h"
 					>
 				</File>
 				<File

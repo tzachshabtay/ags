@@ -41,6 +41,12 @@
 #include "ags_snowrain/ags_snowrain.h"
 #endif
 
+#include "Common/util/stream.h"
+#include "Common/util/string.h"
+using AGS::Common::Util::CString;
+namespace Err = AGS::Common::Core::Err;
+namespace StreamSeek = AGS::Common::Util;
+
 #if defined(MAC_VERSION)
 extern char dataDirectory[512];
 extern char appDirectory[512];
@@ -844,25 +850,28 @@ bool pl_use_builtin_plugin(EnginePlugin* apl)
     return false;
 }
 
-void pl_read_plugins_from_disk (FILE *iii) {
-    if (getw(iii) != 1)
+//void pl_read_plugins_from_disk (FILE *iii) {
+HErr pl_read_plugins_from_disk (CStream *in) {
+    if (in->ReadInt32() != 1)
         quit("ERROR: unable to load game, invalid version of plugin data");
 
     int a, datasize;
-    char buffer[200];
-    numPlugins = getw(iii);
+    //char buffer[200];
+    CString buf_str;
+    numPlugins = in->ReadInt32();
 
     if (numPlugins > MAXPLUGINS)
         quit("Too many plugins used by this game");
 
     for (a = 0; a < numPlugins; a++) {
         // read the plugin name
-        fgetstring (buffer, iii);
-        datasize = getw(iii);
+        //fgetstring (buffer, iii);
+        buf_str.ReadAsCStr(in);
+        datasize = in->ReadInt32();
 
-        if (buffer[strlen(buffer) - 1] == '!') {
+        if (buf_str[buf_str.GetLength() - 1] == '!') {
             // editor-only plugin, ignore it
-            fseek(iii, datasize, SEEK_CUR);
+            in->Seek(StreamSeek::kSeekCurrent, datasize);
             a--;
             numPlugins--;
             continue;
@@ -870,11 +879,13 @@ void pl_read_plugins_from_disk (FILE *iii) {
 
         // just check for silly datasizes
         if ((datasize < 0) || (datasize > 10247680))
-            quit("Too much plugin save data for this engine");
+        {
+            return Err::FromString("Too much plugin save data for this engine");
+        }
 
         // load the actual plugin from disk
         EnginePlugin *apl = &plugins[a];
-        strcpy (apl->filename, buffer);
+        strcpy(apl->filename, buf_str.GetCStr());
 #if defined(MAC_VERSION)
         // Compatibility with the old SnowRain module
         if (stricmp(apl->filename, "ags_SnowRain20.dll") == 0)
@@ -1005,15 +1016,17 @@ void pl_read_plugins_from_disk (FILE *iii) {
             apl->initGfxHook = (void(*)(const char*, void*))kernel_sctrlHENFindFunction(module_name, module_name, 0xA428D254); // AGS_EngineInitGfx
 #else
             if (GetProcAddress (apl->dllHandle, "AGS_PluginV2") == NULL) {
-                sprintf(buffer, "Plugin '%s' is an old incompatible version.", apl->filename);
-                quit(buffer);
+                CString msg;
+                msg.Format("Plugin '%s' is an old incompatible version.", apl->filename);
+                return Err::FromString(msg);
             }
             apl->engineStartup = (void(*)(IAGSEngine*))GetProcAddress (apl->dllHandle, "AGS_EngineStartup");
             apl->engineShutdown = (void(*)())GetProcAddress (apl->dllHandle, "AGS_EngineShutdown");
 
             if (apl->engineStartup == NULL) {
-                sprintf(buffer, "Plugin '%s' is not a valid AGS plugin (no engine startup entry point)", apl->filename);
-                quit(buffer);
+                CString msg;
+                msg.Format("Plugin '%s' is not a valid AGS plugin (no engine startup entry point)", apl->filename);
+                return Err::FromString(msg);
             }
             apl->onEvent = (int(*)(int,int))GetProcAddress (apl->dllHandle, "AGS_EngineOnEvent");
             apl->debugHook = (int(*)(const char*,int,int))GetProcAddress (apl->dllHandle, "AGS_EngineDebugHook");
@@ -1023,7 +1036,7 @@ void pl_read_plugins_from_disk (FILE *iii) {
 
         if (datasize > 0) {
             apl->savedata = (char*)malloc(datasize);
-            fread (apl->savedata, datasize, 1, iii);
+            in->Read(apl->savedata, datasize * sizeof(byte));
         }
         apl->savedatasize = datasize;
         apl->eiface.pluginId = a;
@@ -1031,5 +1044,6 @@ void pl_read_plugins_from_disk (FILE *iii) {
         apl->wantHook = 0;
     }
 
+    return Err::Nil();
 }
 #endif

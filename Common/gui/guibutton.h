@@ -39,6 +39,10 @@ struct GUIButton:public GUIObject
 
   virtual void WriteToFile(FILE * ooo);
   virtual void ReadFromFile(FILE * ooo, int);
+
+  virtual HErr Read(CStream *in, int gui_data_version);
+  virtual HErr Write(CStream *out, int gui_data_version);
+
   void Draw();
   void MouseUp();
 

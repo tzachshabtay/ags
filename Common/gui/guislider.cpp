@@ -5,6 +5,8 @@
 #include "util/wgt2allg.h"
 #include "ac/spritecache.h"
 
+namespace Err = AGS::Common::Core::Err;
+
 extern SpriteCache spriteset;
 
 DynamicArray<GUISlider> guislider;
@@ -31,6 +33,16 @@ void GUISlider::ReadFromFile(FILE * ooo, int version)
 
   GUIObject::ReadFromFile(ooo, version);
   fread(&min, sizeof(int), sizeToRead, ooo);
+}
+
+HErr GUISlider::Read(CStream *in, int gui_data_version)
+{
+    return Err::Nil();
+}
+
+HErr GUISlider::Write(CStream *out, int gui_data_version)
+{
+    return Err::Nil();
 }
 
 void GUISlider::Draw()

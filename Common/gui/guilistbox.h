@@ -31,6 +31,10 @@ struct GUIListBox:public GUIObject
   int alignment, reserved1;
   virtual void WriteToFile(FILE *);
   virtual void ReadFromFile(FILE *, int);
+
+  virtual HErr Read(CStream *in, int gui_data_version);
+  virtual HErr Write(CStream *out, int gui_data_version);
+
   int  AddItem(const char *toadd);
   int  InsertItem(int index, const char *toadd);
   void SetItemText(int index, const char *newtext);

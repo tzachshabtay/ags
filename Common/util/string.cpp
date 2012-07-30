@@ -29,6 +29,11 @@ int CString::GetLength() const
     return strlen(s);
 }
 
+void CString::SetLength(int len)
+{
+    // o_0
+}
+
 int CString::Compare(const CString &other) const
 {
     return 0;
@@ -42,6 +47,26 @@ void CString::Format(const CString &format, ...)
 int CString::ToInt() const
 {
     return 0;
+}
+
+void CString::Read(CStream *in)
+{
+
+}
+
+void CString::Write(CStream *out)
+{
+
+}
+
+void CString::ReadAsCStr(CStream *in)
+{
+
+}
+
+void CString::WriteAsCStr(CStream *out)
+{
+
 }
 
 } // namespace Util

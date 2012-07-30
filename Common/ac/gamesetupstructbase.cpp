@@ -2,6 +2,9 @@
 #include "util/wgt2allg.h"
 #include "ac/gamesetupstructbase.h"
 
+#include "Common/util/stream.h"
+namespace Err = AGS::Common::Core::Err;
+
 void GameSetupStructBase::ReadFromFile(FILE *fp)
 {
     //#ifdef ALLEGRO_BIG_ENDIAN
@@ -79,4 +82,14 @@ void GameSetupStructBase::WriteToFile(FILE *fp)
     putw((int32)globalscript, fp);
     putw((int32)chars, fp);
     putw((int32)compiled_script, fp);
+}
+
+HErr GameSetupStructBase::Read(CStream *in)
+{
+    return Err::Nil();
+}
+
+HErr GameSetupStructBase::Write(CStream *out)
+{
+    return Err::Nil();
 }

@@ -140,6 +140,11 @@ bool CAssetsManager::SetSearchPriority(AssetsSearchPriority pr)
     return true;
 }
 
+CStream *CAssetsManager::OpenAsset(const CString &asset_file, const CString &mode)
+{
+    return OpenAsset(_currentDataFile, asset_file, mode);
+}
+
 CStream *CAssetsManager::OpenAsset(const CString &data_file, const CString &asset_file, const CString &mode)
 {
     if (_currentDataFile.Compare(data_file) != 0)

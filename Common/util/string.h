@@ -16,6 +16,9 @@ namespace Common
 namespace Util
 {
 
+// Forward declaration
+class CStream;
+
 class CString
 {
 public:
@@ -44,12 +47,18 @@ public:
     // Checks if string is empty or null
     bool IsEmpty() const;
     int  GetLength() const;
+    void SetLength(int len);
     int  Compare(const CString &other) const;
     void Format(const CString &format, ...);
 
     char &operator[](int c) { return s[c]; }
 
     int ToInt() const;
+
+    void Read(CStream *in);
+    void Write(CStream *out);
+    void ReadAsCStr(CStream *in);
+    void WriteAsCStr(CStream *out);
 };
 
 } // namespace Util

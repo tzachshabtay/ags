@@ -16,6 +16,21 @@
 #include "gui/guiobject.h"
 #include "ac/common_defines.h"       // AGS_INLINE
 
+namespace AGS
+{
+namespace Common
+{
+namespace Util
+{
+class CStream;
+} // namespace Util
+} // namespace Common
+} // namespace AGS
+
+#include "Common/core/err.h"
+using AGS::Common::Core::HErr;
+using AGS::Common::Util::CStream;
+
 // There were issues when including header caused conflicts
 struct GameSetupStruct;
 
@@ -84,6 +99,14 @@ struct GUIMain
   void ReadFromFile(FILE *fp, int version);
   void WriteToFile(FILE *fp);
 
+    HErr Read(CStream *in, int game_data_version, int gui_data_version, int gui_id);
+    HErr Write(CStream *out, int game_data_version, int gui_data_version);
+
+    HErr RebuildChildArray(int gui_data_version);
+
+protected:
+
+    HErr PostReadInit(int game_data_version, int gui_data_version, int gui_id);
 };
 
 

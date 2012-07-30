@@ -22,12 +22,12 @@ CRoom::~CRoom()
 
 }
 
-/*const*/ roomstruct &CRoom::GetRoomStatic() /*const*/
+/*const*/ roomstruct &CRoom::GetStatic() /*const*/
 {
     return _roomStatic;
 }
 
-/*const*/ RoomStatus &CRoom::GetRoomState() /*const*/
+/*const*/ RoomStatus &CRoom::GetState() /*const*/
 {
     return _roomState;
 }

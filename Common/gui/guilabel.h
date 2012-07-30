@@ -26,6 +26,10 @@ public:
 
   virtual void WriteToFile(FILE *);
   virtual void ReadFromFile(FILE *, int);
+
+  virtual HErr Read(CStream *in, int gui_data_version);
+  virtual HErr Write(CStream *out, int gui_data_version);
+
   void Draw();
   void printtext_align(int yy, char *teptr);
   void SetText(const char *newText);
@@ -65,6 +69,12 @@ public:
   GUILabel() {
     reset();
   }
+
+protected:
+    void PostReadInit()
+    {
+        SetClickable(false);
+    }
 
 private:
   void Draw_replace_macro_tokens(char *oritext, char *text);

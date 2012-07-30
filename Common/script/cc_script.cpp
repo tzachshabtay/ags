@@ -6,6 +6,23 @@
 #include "script/script_common.h"      // SCOM_VERSION, scfilesig
 #include "cc_error.h"
 
+namespace Err = AGS::Common::Core::Err;
+
+/*static*/ ccScript *ccScript::CreateFromStream(CStream *in)
+{
+    return NULL;
+}
+
+HErr ccScript::Read(CStream *in)
+{
+    return Err::Nil();
+}
+
+HErr ccScript::Write(CStream *out)
+{
+    return Err::Nil();
+}
+
 void fput_long(long loo,FILE*ooo) {
     fwrite(&loo,4,1,ooo);
 }

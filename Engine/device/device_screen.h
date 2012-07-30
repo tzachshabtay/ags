@@ -13,7 +13,7 @@
 
 // Forward declarations
 class IGraphicsDriver;
-class GFXFilter;
+struct GFXFilter;
 
 namespace AGS
 {

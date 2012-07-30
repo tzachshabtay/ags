@@ -87,6 +87,7 @@ int ViewFrame_GetFrame(ScriptViewFrame *svf) {
 void allocate_memory_for_views(int viewCount)
 {
     views = (ViewStruct*)calloc(sizeof(ViewStruct) * viewCount, 1);
+
     game.viewNames = (char**)malloc(sizeof(char*) * viewCount);
     game.viewNames[0] = (char*)malloc(MAXVIEWNAMELENGTH * viewCount);
 

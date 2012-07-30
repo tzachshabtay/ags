@@ -361,6 +361,8 @@ int main(int argc,char*argv[])
     //-----------------------------------------------------
     // 5. Program end
     // 
+    CAGSEngine::DestroyInstance();
+
     if (err.IsNil())
     {
         return 0;

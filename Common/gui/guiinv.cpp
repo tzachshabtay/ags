@@ -5,6 +5,7 @@
 #include "gui/guiinv.h"
 #include "gui/guimain.h"
 
+namespace Err = AGS::Common::Core::Err;
 
 DynamicArray<GUIInv> guiinv;
 int numguiinv = 0;
@@ -44,6 +45,16 @@ void GUIInv::ReadFromFile(FILE * ooo, int version)
 	}
 
 	CalculateNumCells();
+}
+
+HErr GUIInv::Read(CStream *in, int gui_data_version)
+{
+    return Err::Nil();
+}
+
+HErr GUIInv::Write(CStream *out, int gui_data_version)
+{
+    return Err::Nil();
 }
 
 void GUIInv::CalculateNumCells() {

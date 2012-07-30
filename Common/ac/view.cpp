@@ -5,6 +5,8 @@
 #include "util/wgt2allg.h"
 #include "util/file.h"
 
+namespace Err = AGS::Common::Core::Err;
+
 void ViewFrame::ReadFromFile(FILE *fp)
 {
 //#ifdef ALLEGRO_BIG_ENDIAN
@@ -133,6 +135,16 @@ void ViewStruct::ReadFromFile(FILE *iii)
     }
 }
 
+HErr ViewStruct::Read(CStream *in)
+{
+    return Err::Nil();
+}
+
+HErr ViewStruct::Write(CStream *out)
+{
+    return Err::Nil();
+}
+
 void ViewStruct272::ReadFromFile(FILE *fp)
 {
 //#ifdef ALLEGRO_BIG_ENDIAN
@@ -167,6 +179,11 @@ void ViewStruct272::ReadFromFile(FILE *fp)
 //        }
 //    }
 //#endif
+}
+
+HErr ViewStruct272::Read(CStream *in)
+{
+    return Err::Nil();
 }
 
 void Convert272ViewsToNew (int numof, ViewStruct272 *oldv, ViewStruct *newv) {

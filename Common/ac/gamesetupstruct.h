@@ -80,6 +80,10 @@ struct GameSetupStruct: public GameSetupStructBase {
     void ReadFromFile_Part1(FILE *f, GAME_STRUCT_READ_DATA &read_data);
     void ReadFromFile_Part2(FILE *f, GAME_STRUCT_READ_DATA &read_data);
     void ReadFromFile_Part3(FILE *f, GAME_STRUCT_READ_DATA &read_data);
+
+    HErr ReadFromStream_Part1(CStream *in, GAME_STRUCT_READ_DATA &read_data);
+    HErr ReadFromStream_Part2(CStream *in, GAME_STRUCT_READ_DATA &read_data);
+    HErr ReadFromStream_Part3(CStream *in, GAME_STRUCT_READ_DATA &read_data);
     //--------------------------------------------------------------------
     // Do not call these directly
     //------------------------------

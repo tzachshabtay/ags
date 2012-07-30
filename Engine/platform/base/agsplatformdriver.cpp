@@ -18,6 +18,12 @@
 #include "ac/common.h"
 #include "util/string_utils.h"
 
+#include "Common/util/stream.h"
+#include "Common/util/string.h"
+using AGS::Common::Util::CString;
+namespace Err = AGS::Common::Core::Err;
+namespace StreamSeek = AGS::Common::Util;
+
 #if defined(LINUX_VERSION) || defined(MAC_VERSION)
 #define strnicmp strncasecmp
 #endif
@@ -56,20 +62,23 @@ void AGSPlatformDriver::ReplaceSpecialPaths(const char *sourcePath, char *destPa
 
 }
 
-void AGSPlatformDriver::ReadPluginsFromDisk(FILE *iii) {
-    if (getw(iii) != 1)
+HErr AGSPlatformDriver::ReadPluginsFromDisk(CStream *in) {
+    if (in->ReadInt32() != 1)
         quit("ERROR: unable to load game, invalid version of plugin data");
 
-    int numPlug = getw(iii), a, datasize;
-    char buffer[80];
+    int numPlug = in->ReadInt32(), a, datasize;
+    //char buffer[80];
+    CString buf;
 
     for (a = 0; a < numPlug; a++) {
         // read the plugin name
-        fgetstring (buffer, iii);
-        datasize = getw(iii);
-        fseek (iii, datasize, SEEK_CUR);
+        buf.ReadAsCStr(in);
+        //fgetstring (buffer, iii);
+        datasize = in->ReadInt32();
+        in->Seek(StreamSeek::kSeekBegin, datasize);
     }
 
+    return Err::Nil();
 }
 
 void AGSPlatformDriver::InitialiseAbufAtStartup()

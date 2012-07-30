@@ -16,6 +16,20 @@
 
 #include "util/file.h"
 
+#include "Common/core/err.h"
+namespace AGS
+{
+namespace Common
+{
+namespace Util
+{
+class CStream;
+}
+}
+}
+using AGS::Common::Core::HErr;
+using AGS::Common::Util::CStream;
+
 // If the plugin isn't using DDraw, don't require the headers
 #ifndef DIRECTDRAW_VERSION
 typedef void *LPDIRECTDRAW2;
@@ -566,6 +580,7 @@ void pl_startup_plugins();
 int  pl_run_plugin_hooks (int event, int data);
 void pl_run_plugin_init_gfx_hooks(const char *driverName, void *data);
 int  pl_run_plugin_debug_hooks (const char *scriptfile, int linenum);
-void pl_read_plugins_from_disk (FILE *iii);
+//void pl_read_plugins_from_disk (FILE *iii);
+HErr pl_read_plugins_from_disk (CStream *in);
 
 #endif

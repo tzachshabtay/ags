@@ -29,12 +29,11 @@ public:
     CRoom();
     ~CRoom();
 
-    /*const*/ roomstruct    &GetRoomStatic() /*const*/;
-    /*const*/ RoomStatus    &GetRoomState() /*const*/;
+    /*const*/ roomstruct    &GetStatic() /*const*/;
+    /*const*/ RoomStatus    &GetState() /*const*/;
 
     HErr                    Initialize();
 
-protected:
 private:
 
     roomstruct  _roomStatic;

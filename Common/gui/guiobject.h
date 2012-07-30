@@ -16,6 +16,20 @@
 #include "gui/guidefines.h"
 #include "util/file.h"
 
+#include "Common/core/err.h"
+namespace AGS
+{
+namespace Common
+{
+namespace Util
+{
+class CStream;
+}
+}
+}
+using AGS::Common::Core::HErr;
+using AGS::Common::Util::CStream;
+
 #define GUIDIS_GREYOUT   1
 #define GUIDIS_BLACKOUT  2
 #define GUIDIS_UNCHANGED 4
@@ -66,6 +80,10 @@ struct GUIObject
   // we can't just fread/fwrite inherited objects because of vtbl, so use:
   virtual void WriteToFile(FILE *);
   virtual void ReadFromFile(FILE *, int);
+
+  virtual HErr Read(CStream *in, int gui_data_version);
+  virtual HErr Write(CStream *out, int gui_data_version);
+
   // called when the control is resized
   virtual void Resized() { }
   virtual int  GetNumEvents() {

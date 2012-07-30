@@ -7,7 +7,7 @@
 
 extern SpriteCache spriteset;
 
-
+namespace Err = AGS::Common::Core::Err;
 
 DynamicArray<GUIButton> guibuts;
 //GUIButton guibuts[MAX_OBJ_EACH_TYPE];
@@ -42,6 +42,17 @@ void GUIButton::ReadFromFile(FILE * ooo, int version)
     reserved1 = 0;
   }
 }
+
+HErr GUIButton::Read(CStream *in, int gui_data_version)
+{
+    return Err::Nil();
+}
+
+HErr GUIButton::Write(CStream *out, int gui_data_version)
+{
+    return Err::Nil();
+}
+
 
 void GUIButton::Draw()
 {

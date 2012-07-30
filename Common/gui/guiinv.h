@@ -28,6 +28,9 @@ struct GUIInv:public GUIObject
   virtual void WriteToFile(FILE * ooo);
   virtual void ReadFromFile(FILE * ooo, int version);
 
+  virtual HErr Read(CStream *in, int gui_data_version);
+  virtual HErr Write(CStream *out, int gui_data_version);
+
   void CalculateNumCells();
 
   virtual void Resized() {

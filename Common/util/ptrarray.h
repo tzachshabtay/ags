@@ -16,9 +16,13 @@ namespace Util
 
 template<typename T> struct CPtrArray
 {
-    T * arr;
+    T **arr;
     int count;
     int capacity;
+
+    void Add(const T *el) {}
+    int  GetCount() const { return count; }
+    void SetCount(int count) {}
 };
 
 } // namespace Util

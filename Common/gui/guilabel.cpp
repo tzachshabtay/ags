@@ -6,6 +6,8 @@
 #include "gui/guimain.h"
 #include "util/wgt2allg.h"
 
+namespace Err = AGS::Common::Core::Err;
+
 DynamicArray<GUILabel> guilabels;
 int numguilabels = 0;
 
@@ -39,6 +41,16 @@ void GUILabel::ReadFromFile(FILE * ooo, int version)
   fread(&font, sizeof(int), 3, ooo);
   if (textcol == 0)
     textcol = 16;
+}
+
+HErr GUILabel::Read(CStream *in, int gui_data_version)
+{
+    return Err::Nil();
+}
+
+HErr GUILabel::Write(CStream *out, int gui_data_version)
+{
+    return Err::Nil();
 }
 
 void GUILabel::SetText(const char *newText) {

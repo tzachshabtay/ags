@@ -1,6 +1,23 @@
 #ifndef __AC_VIEW_H
 #define __AC_VIEW_H
 
+#include "util/file.h"
+
+namespace AGS
+{
+namespace Common
+{
+namespace Util
+{
+class CStream;
+} // namespace Util
+} // namespace Common
+} // namespace AGS
+
+#include "Common/core/err.h"
+using AGS::Common::Core::HErr;
+using AGS::Common::Util::CStream;
+
 #define VFLG_FLIPSPRITE 1
 
 struct ViewFrame {
@@ -40,6 +57,9 @@ struct ViewStruct
     void Dispose();
     void WriteToFile(FILE *ooo);
     void ReadFromFile(FILE *iii);
+
+    HErr Read(CStream *in);
+    HErr Write(CStream *out);
 };
 
 struct ViewStruct272 {
@@ -50,6 +70,8 @@ struct ViewStruct272 {
     ViewStruct272() { numloops = 0; numframes[0] = 0; }
 
     void ReadFromFile(FILE *fp);
+
+    HErr Read(CStream *in);
 };
 
 void Convert272ViewsToNew (int numof, ViewStruct272 *oldv, ViewStruct *newv);

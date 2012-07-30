@@ -20,6 +20,9 @@ template<typename T> struct CArray
     int count;
     int capacity;
 
+    void Add(const T &el) {}
+    int  GetCount() const { return count; }
+    void SetCount(int count) {}
     T &operator[](int index) { return arr[index]; }
 };
 

@@ -15,6 +15,21 @@
 
 #include "util/file.h"
 
+namespace AGS
+{
+namespace Common
+{
+namespace Util
+{
+class CStream;
+} // namespace Util
+} // namespace Common
+} // namespace AGS
+
+#include "Common/core/err.h"
+using AGS::Common::Core::HErr;
+using AGS::Common::Util::CStream;
+
 struct ccScript
 {
     char *globaldata;
@@ -40,6 +55,10 @@ struct ccScript
     long *sectionOffsets;
     int numSections;
     int capacitySections;
+
+    static ccScript *CreateFromStream(CStream *in);
+    HErr Read(CStream *in);
+    HErr Write(CStream *out);
 };
 
 // write the script to disk (after compiling)

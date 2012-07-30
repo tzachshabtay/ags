@@ -877,27 +877,7 @@ void CAGSEngine::engine_init_rand()
 
 int CAGSEngine::engine_load_game_data()
 {
-#ifdef ______NOT_NOW
-    Out::Notify("Load game data");
-
-    our_eip=-17;
-    int ee=load_game_file();
-    if (ee != 0) {
-        proper_exit=1;
-        _platform->FinishedUsingGraphicsMode();
-
-        if (ee==-1)
-            _platform->DisplayAlert("Main game file not found. This may be from a different AGS version, or the file may have got corrupted.\n");
-        else if (ee==-2)
-            _platform->DisplayAlert("Invalid file format. The file may be corrupt, or from a different\n"
-            "version of AGS.\nThis engine can only run games made with AGS 2.5 or later.\n");
-        else if (ee==-3)
-            _platform->DisplayAlert("Script link failed: %s\n",ccErrorString);
-        return EXIT_NORMAL;
-    }
-#endif
-
-    return RETURN_CONTINUE;
+    return 0;
 }
 
 int CAGSEngine::engine_check_register_game()
