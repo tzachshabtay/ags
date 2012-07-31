@@ -26,7 +26,8 @@ template<typename TKey, typename TValue> struct CMap
     int count;
     int capacity;
 
-    void Add(const TKey &key, const TValue &value) {}
+    bool Add(const TKey &key, const TValue &value) { return false; }
+    void Set(const TKey &key, const TValue &value) { }
     bool Find(const TKey &key, TValue &value) { return false; }
 };
 

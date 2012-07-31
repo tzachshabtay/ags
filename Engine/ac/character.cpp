@@ -1996,9 +1996,7 @@ int wantMoveNow (CharacterInfo *chi, CharacterExtras *chex) {
 }
 
 void setup_player_character(int charid) {
-    game.playercharacter = charid;
-    playerchar = &game.chars[charid];
-    _sc_PlayerCharPtr = ccGetObjectHandleFromAddress((char*)playerchar);
+    
 }
 
 void animate_character(CharacterInfo *chap, int loopn,int sppd,int rept, int noidleoverride, int direction) {

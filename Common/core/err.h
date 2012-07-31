@@ -55,6 +55,7 @@ namespace Err
 inline CErrorHandle Nil()                               { return CErrorHandle(); }
 inline CErrorHandle FromCode   (int32_t err_code)       { return CErrorHandle(); }
 inline CErrorHandle FromString (const CString &err_msg) { return CErrorHandle(); }
+inline CErrorHandle FromFormatString (const CString &format, ...) { return CErrorHandle(); }
 };
 
 typedef CErrorHandle HErr;

@@ -172,11 +172,19 @@ HErr CGUIManager::WriteGUI(CStream *out)
     return Err::Nil();
 }
 
+int32_t CGUIManager::GetGUICount() const
+{
+    return _guiMain.GetCount();
+}
+
+GUIMain *CGUIManager::GetGUI(int32_t index)
+{
+    return &_guiMain[index];
+}
+
 HErr CGUIManager::PostReadInit(int32_t gui_data_version)
 {
     HErr err;
-
-    _guiDrawOrder.SetCount(_guiMain.GetCount());
 
     for (int i = 0; i < _guiMain.GetCount(); ++i)
     {
@@ -185,9 +193,38 @@ HErr CGUIManager::PostReadInit(int32_t gui_data_version)
         {
             return err;
         }
+
+        if ((_guiMain[i].popup == POPUP_NONE) || (_guiMain[i].popup == POPUP_NOAUTOREM))
+            _guiMain[i].on = 1;
+        else
+            _guiMain[i].on = 0;
     }
 
+    _guiDrawOrder.SetCount(_guiMain.GetCount());
+    UpdateGUIZOrder();
+
     return Err::Nil();
+}
+
+void CGUIManager::UpdateGUIZOrder()
+{
+    int numdone = 0, gui_zorder;
+    // for each GUI
+    for (int gui_main_index = 0; gui_main_index < _guiMain.GetCount(); ++gui_main_index) {
+        // find the right place in the draw order array
+        int insertAt = numdone;
+        for (gui_zorder = 0; gui_zorder < numdone; ++gui_zorder) {
+            if (_guiMain[gui_main_index].zorder < _guiMain[_guiDrawOrder[gui_zorder]].zorder) {
+                insertAt = gui_zorder;
+                break;
+            }
+        }
+        // insert the new item
+        for (gui_zorder = numdone - 1; gui_zorder >= insertAt; --gui_zorder)
+            _guiDrawOrder[gui_zorder + 1] = _guiDrawOrder[gui_zorder];
+        _guiDrawOrder[insertAt] = gui_main_index;
+        numdone++;
+    }
 }
 
 } // namespace GUI

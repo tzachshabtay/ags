@@ -1016,17 +1016,13 @@ HErr pl_read_plugins_from_disk (CStream *in) {
             apl->initGfxHook = (void(*)(const char*, void*))kernel_sctrlHENFindFunction(module_name, module_name, 0xA428D254); // AGS_EngineInitGfx
 #else
             if (GetProcAddress (apl->dllHandle, "AGS_PluginV2") == NULL) {
-                CString msg;
-                msg.Format("Plugin '%s' is an old incompatible version.", apl->filename);
-                return Err::FromString(msg);
+                return Err::FromFormatString("Plugin '%s' is an old incompatible version.", apl->filename);
             }
             apl->engineStartup = (void(*)(IAGSEngine*))GetProcAddress (apl->dllHandle, "AGS_EngineStartup");
             apl->engineShutdown = (void(*)())GetProcAddress (apl->dllHandle, "AGS_EngineShutdown");
 
             if (apl->engineStartup == NULL) {
-                CString msg;
-                msg.Format("Plugin '%s' is not a valid AGS plugin (no engine startup entry point)", apl->filename);
-                return Err::FromString(msg);
+                return Err::FromFormatString("Plugin '%s' is not a valid AGS plugin (no engine startup entry point)", apl->filename);
             }
             apl->onEvent = (int(*)(int,int))GetProcAddress (apl->dllHandle, "AGS_EngineOnEvent");
             apl->debugHook = (int(*)(const char*,int,int))GetProcAddress (apl->dllHandle, "AGS_EngineDebugHook");

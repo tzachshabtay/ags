@@ -61,21 +61,7 @@ void calculate_reserved_channel_count()
 
 void register_audio_script_objects()
 {
-    int ee;
-    for (ee = 0; ee <= MAX_SOUND_CHANNELS; ee++) 
-    {
-        scrAudioChannel[ee].id = ee;
-        ccRegisterManagedObject(&scrAudioChannel[ee], &ccDynamicAudio);
-    }
-
-    for (ee = 0; ee < game.audioClipCount; ee++)
-    {
-        game.audioClips[ee].id = ee;
-        ccRegisterManagedObject(&game.audioClips[ee], &ccDynamicAudioClip);
-        ccAddExternalSymbol(game.audioClips[ee].scriptName, &game.audioClips[ee]);
-    }
-
-    calculate_reserved_channel_count();
+    
 }
 
 void update_clip_default_volume(ScriptAudioClip *audioClip)

@@ -7,12 +7,15 @@
 #include "Engine/core/engine_setup.h"
 #include "Engine/game/agsgame.h"
 #include "Engine/game/assets_manager.h"
+#include "Engine/game/_character.h"
 #include "Engine/game/_dialogtopic.h"
 #include "Engine/game/_room.h"
 #include "Engine/game/_view.h"
 #include "Engine/platform/base/agsplatformdriver.h"
-#include "script/exports.h"
 #include "media/audio/audio.h"
+#include "script/exports.h"
+#include "script/script.h"
+#include "script/script_runtime.h"
 
 // from cc_error
 extern char ccErrorString[400];
@@ -75,7 +78,42 @@ HErr CAGSGame::Initialize()
         return err;
     }
 
+    CAGSEngine::SetEIP(-17);
+
     err = LoadGameData();
+    if (!err.IsNil())
+    {
+        // TODO: actually move these to error handling system later
+        //proper_exit=1;
+        platform->FinishedUsingGraphicsMode(); // TODO: this one goes to engine shutdown
+
+        if (err.GetErrorCodeOrSomething() == -1)
+            platform->DisplayAlert("Main game file not found. This may be from a different AGS version, or the file may have got corrupted.\n");
+        else if (err.GetErrorCodeOrSomething() == -2)
+            platform->DisplayAlert("Invalid file format. The file may be corrupt, or from a different\n"
+            "version of AGS.\nThis engine can only run games made with AGS 2.5 or later.\n");
+        else if (err.GetErrorCodeOrSomething() == -3)
+            platform->DisplayAlert("Script link failed: %s\n",ccErrorString);
+        return Err::FromCode(EXIT_NORMAL);
+    }
+
+    CAGSEngine::SetEIP(-11);
+
+    err = InitGameObjects();
+    if (!err.IsNil())
+    {
+        return err;
+    }
+
+    RegisterScriptObjects();
+
+    CAGSEngine::SetEIP(-23);
+
+    platform->StartPlugins();
+
+    CAGSEngine::SetEIP(-24);
+
+    err = InitScripts();
     if (!err.IsNil())
     {
         return err;
@@ -91,7 +129,7 @@ void CAGSGame::Shutdown()
 
 void CAGSGame::SetGlobalMessage(int32_t id, const CString &message)
 {
-    _globalMessages.Add(id, message);
+    _globalMessages.Set(id, message);
 }
 
 CString CAGSGame::GetGlobalMessage(int32_t id)
@@ -101,36 +139,22 @@ CString CAGSGame::GetGlobalMessage(int32_t id)
     return s;
 }
 
+HErr CAGSGame::SetPlayerCharacter(int32_t char_id)
+{
+    _game.playercharacter = char_id;
+    _playerChar = &_chars[char_id];
+    _scPlayerCharPtr = ccGetObjectHandleFromAddress((const char*)&_playerChar->GetInfo());
+    return Err::Nil();
+}
+
 HErr CAGSGame::InitGameState()
 {
-    HErr err;
     AGSPlatformDriver *platform = AGSPlatformDriver::GetDriver();
 
     // init general state
     _play.recording      = 0;
     _play.playback       = 0;
     _play.takeover_data  = 0;
-
-    err = InitRooms();
-    err = InitSpeech();
-
-    Out::Notify("Load game data");
-
-    CAGSEngine::SetEIP(-17);
-    err = LoadGameData();
-    if (err.GetErrorCodeOrSomething() != 0) {
-        //proper_exit=1;
-        platform->FinishedUsingGraphicsMode();
-
-        if (err.GetErrorCodeOrSomething() == -1)
-            platform->DisplayAlert("Main game file not found. This may be from a different AGS version, or the file may have got corrupted.\n");
-        else if (err.GetErrorCodeOrSomething() == -2)
-            platform->DisplayAlert("Invalid file format. The file may be corrupt, or from a different\n"
-            "version of AGS.\nThis engine can only run games made with AGS 2.5 or later.\n");
-        else if (err.GetErrorCodeOrSomething() == -3)
-            platform->DisplayAlert("Script link failed: %s\n",ccErrorString);
-        return Err::FromCode(EXIT_NORMAL);
-    }
 
     return Err::Nil();
 }
@@ -141,7 +165,7 @@ HErr CAGSGame::InitRooms()
     // Not needed here since using dynamic arrays
     /*
     roomstats=(RoomStatus*)calloc(sizeof(RoomStatus),MAX_ROOMS);
-    for (int ee=0;ee<MAX_ROOMS;ee++) {
+    for (int i=0;i<MAX_ROOMS;i++) {
         
     }
     */
@@ -189,6 +213,8 @@ HErr CAGSGame::InitSpeech()
 
 HErr CAGSGame::LoadGameData()
 {
+    Out::Notify("Load game data");
+
     // TODO: move somewhere else
     _gamePaused = 0;  // reset the game paused flag
     ifacepopped = -1;
@@ -215,6 +241,11 @@ HErr CAGSGame::LoadGameData()
 
     GameSetupStructBase *gameBase = (GameSetupStructBase *) &_game;
     gameBase->Read(in);
+
+    if (gameBase->numfonts == 0)
+    {
+        return Err::FromCode(-2);  // old v2.00 version
+    }
 
     if (_gameDataVersion <= kGameData_310) // <= 3.1
     {
@@ -292,6 +323,56 @@ HErr CAGSGame::LoadGameData()
     SetScoreSound(read_data.score_sound);
 
     delete in;
+    return Err::Nil();
+}
+
+HErr CAGSGame::InitGameObjects()
+{
+    HErr err = LoadFonts();
+    if (!err.IsNil())
+    {
+        return err;
+    }
+
+    // TODO: move elsewhere
+    wtexttransparent(TEXTFG);
+    _play.fade_effect = _game.options[OPT_FADETYPE];
+    return Err::Nil();
+}
+
+void CAGSGame::RegisterScriptObjects()
+{
+    RegisterScriptAudio();
+    RegisterScriptCharacters();
+    RegisterScriptDialogs();
+    RegisterScriptDialogOptionsRenderer();
+    RegisterScriptGUIs();
+    RegisterScriptHotspots();
+    RegisterScriptInventoryItems();
+    RegisterScriptRegions();
+    RegisterScriptRoomObjects();
+
+    ccAddExternalSymbol("character",&_game.chars[0]);
+    SetPlayerCharacter(_game.playercharacter);
+    ccAddExternalSymbol("player", &_scPlayerCharPtr);
+    ccAddExternalSymbol("object",&_scrObj[0]);
+    ccAddExternalSymbol("gui",&_scrGui[0]);
+    ccAddExternalSymbol("hotspot",&_scrHotspot[0]);
+    ccAddExternalSymbol("region",&_scrRegion[0]);
+    ccAddExternalSymbol("inventory",&_scrInv[0]);
+    ccAddExternalSymbol("dialog", &_scrDialog[0]);
+}
+
+HErr CAGSGame::InitScripts()
+{
+    ccSetScriptAliveTimer(150000);
+    ccSetStringClassImpl(&_myScriptStringImpl);
+
+    if (create_global_script())
+    {
+        return Err::FromCode(-3);
+    }
+
     return Err::Nil();
 }
 
@@ -424,7 +505,7 @@ HErr CAGSGame::ReadDialogs(CStream *in)
     if (_gameDataVersion <= kGameData_310) // Dialog script
     {
         _dialogScripts310.SetCount(_game.numdialog);
-        //old_dialog_scripts = (unsigned char**)malloc(game.numdialog * sizeof(unsigned char**));
+        //old_dialog_scripts = (unsigned char**)malloc(_game.numdialog * sizeof(unsigned char**));
 
         for (int i = 0; i < _game.numdialog; ++i)
         {
@@ -530,19 +611,19 @@ void CAGSGame::AllocGameObjects()
 
 void CAGSGame::SetDefaultGlobalMessages()
 {
-    SetGlobalMessage (983, "Sorry, not now.");
-    SetGlobalMessage (984, "Restore");
-    SetGlobalMessage (985, "Cancel");
-    SetGlobalMessage (986, "Select a game to restore:");
-    SetGlobalMessage (987, "Save");
-    SetGlobalMessage (988, "Type a name to save as:");
-    SetGlobalMessage (989, "Replace");
-    SetGlobalMessage (990, "The save directory is full. You must replace an existing game:");
-    SetGlobalMessage (991, "Replace:");
-    SetGlobalMessage (992, "With:");
-    SetGlobalMessage (993, "Quit");
-    SetGlobalMessage (994, "Play");
-    SetGlobalMessage (995, "Are you sure you want to quit?");
+    SetDefaultGlobalMessage (983, "Sorry, not now.");
+    SetDefaultGlobalMessage (984, "Restore");
+    SetDefaultGlobalMessage (985, "Cancel");
+    SetDefaultGlobalMessage (986, "Select a game to restore:");
+    SetDefaultGlobalMessage (987, "Save");
+    SetDefaultGlobalMessage (988, "Type a name to save as:");
+    SetDefaultGlobalMessage (989, "Replace");
+    SetDefaultGlobalMessage (990, "The save directory is full. You must replace an existing game:");
+    SetDefaultGlobalMessage (991, "Replace:");
+    SetDefaultGlobalMessage (992, "With:");
+    SetDefaultGlobalMessage (993, "Quit");
+    SetDefaultGlobalMessage (994, "Play");
+    SetDefaultGlobalMessage (995, "Are you sure you want to quit?");
 }
 
 void CAGSGame::SetDefaultGlobalMessage(int32_t id, const CString &message)
@@ -571,6 +652,187 @@ void CAGSGame::SetScoreSound(int32_t sound_id)
         }
     }
 }
+
+void CAGSGame::RegisterScriptAudio()
+{
+    int i;
+    for (i = 0; i <= _scrAudioChannel.GetCount(); ++i) 
+    {
+        _scrAudioChannel[i].id = i;
+        ccRegisterManagedObject(&_scrAudioChannel[i], &_ccDynamicAudio);
+    }
+
+    for (i = 0; i < _scrAudioClips.GetCount(); ++i)
+    {
+        _scrAudioClips[i].id = i;
+        ccRegisterManagedObject(&_scrAudioClips[i], &_ccDynamicAudioClip);
+        ccAddExternalSymbol(_scrAudioClips[i].scriptName, &_scrAudioClips[i]);
+    }
+
+    calculate_reserved_channel_count();
+}
+
+void CAGSGame::RegisterScriptCharacters()
+{
+    for (int i = 0; i < _chars.GetCount(); ++i)
+    {
+        // TODO: move to CCharacter init or something
+        CharacterInfo &chinfo = _chars[i].GetInfo();
+        chinfo.walking = 0;
+        chinfo.animating = 0;
+        chinfo.pic_xoffs = 0;
+        chinfo.pic_yoffs = 0;
+        chinfo.blinkinterval = 140;
+        chinfo.blinktimer = chinfo.blinkinterval;
+        chinfo.index_id = i;
+        chinfo.blocking_width = 0;
+        chinfo.blocking_height = 0;
+        chinfo.prevroom = -1;
+        chinfo.loop = 0;
+        chinfo.frame = 0;
+        chinfo.walkwait = -1;
+        ccRegisterManagedObject(&chinfo, &_ccDynamicCharacter);
+
+        // export the character's script object
+        //characterScriptObjNames[i] = (char*)malloc(strlen(chinfo.scrname) + 5);
+        _characterScriptObjNames[i] = chinfo.scrname;
+
+        ccAddExternalSymbol(characterScriptObjNames[i], &chinfo);
+    }
+}
+
+void CAGSGame::RegisterScriptDialogs()
+{
+    for (int i = 0; i < _scrDialog.GetCount(); ++i)
+    {
+        _scrDialog[i].id = i;
+        _scrDialog[i].reserved = 0;
+
+        ccRegisterManagedObject(&_scrDialog[i], &_ccDynamicDialog);
+
+        if (!_dialogScriptNames[i].IsEmpty())
+            ccAddExternalSymbol(const_cast<char*>(_dialogScriptNames[i].GetCStr()), &_scrDialog[i]);
+    }
+}
+
+void CAGSGame::RegisterScriptDialogOptionsRenderer()
+{
+    ccRegisterManagedObject(&_ccDialogOptionsRendering, &_ccDialogOptionsRendering);
+
+    _dialogOptionsRenderingSurface = new ScriptDrawingSurface();
+    _dialogOptionsRenderingSurface->isLinkedBitmapOnly = true;
+    long dorsHandle = ccRegisterManagedObject(_dialogOptionsRenderingSurface, _dialogOptionsRenderingSurface);
+    ccAddObjectReference(dorsHandle);
+}
+
+void CAGSGame::RegisterScriptGUIs()
+{
+    int i;
+
+    //scrGui = (ScriptGUI*)malloc(sizeof(ScriptGUI) * _game.numgui);
+    _scrGui.SetCount(_game.numgui);
+    for (i = 0; i < _scrGui.GetCount(); ++i)
+    {
+        _scrGui[i].gui = NULL;
+        _scrGui[i].id = -1;
+    }
+
+//    guiScriptObjNames = (char**)malloc(sizeof(char*) * _game.numgui);
+    _guiScriptObjNames.SetCount(_game.numgui);
+    for (i = 0; i < _guiManager.GetGUICount(); ++i)
+    {
+        GUIMain *gui_main = _guiManager.GetGUI(i);
+        // export all the GUI's controls
+        RegisterScriptGUIControls(gui_main);
+
+        // copy the script name to its own memory location
+        // because ccAddExtSymbol only keeps a reference
+        //guiScriptObjNames[i] = (char*)malloc(21);
+        //strcpy(guiScriptObjNames[i], guis[i].name);
+        _guiScriptObjNames[i] = gui_main->name;
+
+        _scrGui[i].gui = gui_main;
+        _scrGui[i].id = i;
+
+        ccAddExternalSymbol(const_cast<char*>(_guiScriptObjNames[i].GetCStr()), &_scrGui[i]);
+        ccRegisterManagedObject(&_scrGui[i], &_ccDynamicGUI);
+    }
+}
+
+void CAGSGame::RegisterScriptGUIControls(GUIMain *gui_main)
+{
+    for (int i = 0; i < gui_main->numobjs; ++i) {
+        if (gui_main->objs[i]->scriptName[0] != 0)
+            ccAddExternalSymbol(gui_main->objs[i]->scriptName, gui_main->objs[i]);
+
+        ccRegisterManagedObject(gui_main->objs[i], &_ccDynamicGUIObject);
+    }
+}
+
+void CAGSGame::RegisterScriptHotspots()
+{
+    for (int i = 0; i < _scrHotspot.GetCount(); ++i) {
+        _scrHotspot[i].id = i;
+        _scrHotspot[i].reserved = 0;
+
+        ccRegisterManagedObject(&_scrHotspot[i], &_ccDynamicHotspot);
+    }
+}
+
+void CAGSGame::RegisterScriptInventoryItems()
+{
+    for (int i = 0; i < _scrInv.GetCount(); ++i) {
+        _scrInv[i].id = i;
+        _scrInv[i].reserved = 0;
+
+        ccRegisterManagedObject(&_scrInv[i], &_ccDynamicInv);
+
+        if (!_invScriptNames[i].IsEmpty())
+            ccAddExternalSymbol(const_cast<char*>(_invScriptNames[i].GetCStr()), &_scrInv[i]);
+    }
+}
+
+void CAGSGame::RegisterScriptRegions()
+{
+    for (int i = 0; i < _scrRegion.GetCount(); ++i) {
+        _scrRegion[i].id = i;
+        _scrRegion[i].reserved = 0;
+
+        ccRegisterManagedObject(&_scrRegion[i], &_ccDynamicRegion);
+    }
+}
+
+void CAGSGame::RegisterScriptRoomObjects()
+{
+    for (int i = 0; i < _scrObj.GetCount(); ++i) {
+        ccRegisterManagedObject(&_scrObj[i], &_ccDynamicObject);
+    }
+}
+
+HErr CAGSGame::LoadFonts()
+{
+    CAGSEngine::SetEIP(-22);
+    for (int i = 0; i < _game.numfonts; ++i)
+    {
+        int fontsize = _game.fontflags[i] & FFLG_SIZEMASK;
+        if (fontsize == 0)
+            fontsize = 8;
+
+        if ((_game.options[OPT_NOSCALEFNT] == 0) && (_game.default_resolution > 2))
+            fontsize *= 2;
+
+        if (!wloadfont_size(i, fontsize))
+        {
+            return Err::FromFormatString("Unable to load font %d, no renderer could load a matching file", i);
+        }
+    }
+
+    return Err::Nil();
+}
+
+//ccRegisterManagedObject(&dummygui, NULL);
+//ccRegisterManagedObject(&dummyguicontrol, NULL);
+
 
 
 } // namespace Game

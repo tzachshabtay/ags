@@ -22,6 +22,8 @@
 #include "ac/lipsync.h"
 #include "ac/movelist.h"
 #include "script/cc_instance.h"
+#include "ac/dynobj/all_dynamicclasses.h"
+#include "ac/dynobj/all_scriptclasses.h"
 
 namespace AGS
 {
@@ -140,12 +142,17 @@ public:
     void    SetGlobalMessage(int32_t id, const CString &message);
     CString GetGlobalMessage(int32_t id);
 
+    HErr    SetPlayerCharacter(int32_t char_id);
+
 protected:
 
     HErr    InitGameState();
     HErr    InitRooms();
     HErr    InitSpeech();
     HErr    LoadGameData();
+    HErr    InitGameObjects();
+    void    RegisterScriptObjects();
+    HErr    InitScripts();
 
     CStream *OpenGameDataFile();
     HErr    ReadGameDataVersion(CStream *in);
@@ -157,6 +164,19 @@ protected:
     void    SetDefaultGlobalMessages();
     void    SetDefaultGlobalMessage(int32_t id, const CString &message);
     void    SetScoreSound(int32_t sound_id);
+
+    HErr    LoadFonts();
+
+    void    RegisterScriptAudio();
+    void    RegisterScriptCharacters();
+    void    RegisterScriptDialogs();
+    void    RegisterScriptDialogOptionsRenderer();
+    void    RegisterScriptGUIs();
+    void    RegisterScriptGUIControls(GUIMain *gui_main);
+    void    RegisterScriptHotspots();
+    void    RegisterScriptInventoryItems();
+    void    RegisterScriptRegions();   
+    void    RegisterScriptRoomObjects();
 
 private:
 
@@ -189,12 +209,39 @@ private:
     CArray<CString>             _speechLines310;
 
     CGUIManager                 &_guiManager;
+    CArray<ScriptObject>        _scrObj;
+    CArray<ScriptGUI>           _scrGui;
+    CArray<ScriptHotspot>       _scrHotspot;
+    CArray<ScriptRegion>        _scrRegion;
+    CArray<ScriptInvItem>       _scrInv;
+    CArray<ScriptDialog>        _scrDialog;
+    CArray<ScriptAudioChannel>  _scrAudioChannel;
+    CArray<ScriptAudioClip>     _scrAudioClips;
+    CCGUIObject                 _ccDynamicGUIObject;
+    CCCharacter                 _ccDynamicCharacter;
+    CCHotspot                   _ccDynamicHotspot;
+    CCRegion                    _ccDynamicRegion;
+    CCInventory                 _ccDynamicInv;
+    CCGUI                       _ccDynamicGUI;
+    CCObject                    _ccDynamicObject;
+    CCDialog                    _ccDynamicDialog;
+    ScriptDialogOptionsRendering _ccDialogOptionsRendering;
+    ScriptDrawingSurface        *_dialogOptionsRenderingSurface;
+    CCAudioChannel              _ccDynamicAudio;
+    CCAudioClip                 _ccDynamicAudioClip;
+    ScriptString                _myScriptStringImpl;
+    CArray<CString>             _characterScriptObjNames;
+    CArray<CString>             _dialogScriptNames;
+    CArray<CString>             _guiScriptObjNames;
+    CArray<CString>             _invScriptNames;
 
     GameDataVersion             _gameDataVersion;
     bool                        _isOldDataFile;
     int32_t                     _gameEngineRequiredVersion;
 
     bool                        _gamePaused;
+    CCharacter                  *_playerChar;
+    intptr_t                    _scPlayerCharPtr;
 };
 
 } // namespace Game

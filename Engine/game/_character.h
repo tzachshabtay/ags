@@ -10,8 +10,9 @@
 #define __AGS_EE_GAME__CHARACTER_H
 
 #include "Common/core/err.h"
-#include "Common/ac/roomstruct.h"
-#include "Engine/ac/roomstatus.h"
+#include "Common/ac/characterinfo.h"
+#include "Engine/ac/charactercache.h"
+#include "Engine/ac/characterextras.h"
 
 namespace AGS
 {
@@ -32,8 +33,6 @@ public:
     /*const*/ CharacterInfo     &GetInfo() /*const*/;
     /*const*/ CharacterExtras   &GetExtras() /*const*/;
     /*const*/ CharacterCache    &GetCache() /*const*/;
-
-    HErr                        Initialize();
 
 private:
 

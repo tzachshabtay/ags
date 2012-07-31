@@ -1153,6 +1153,10 @@
 				Name="game"
 				>
 				<File
+					RelativePath="..\..\Engine\game\_character.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Engine\game\_dialogtopic.cpp"
 					>
 				</File>

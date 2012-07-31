@@ -51,9 +51,15 @@ public:
     HErr    ReadGUI(CStream *in, int game_data_version, GameSetupStruct &game);
     HErr    WriteGUI(CStream *out);
 
+    int32_t GetGUICount() const;
+    GUIMain *GetGUI(int32_t index);
+
 protected:
 
     HErr    PostReadInit(int32_t gui_data_version);
+    void    UpdateGUIZOrder();
+    void    RegisterScriptGUIMains();
+    void    RegisterScriptGUIControls(GUIMain *gui_main);
 
 private:
     CArray<GUIMain>     _guiMain;

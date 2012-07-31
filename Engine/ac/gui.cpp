@@ -319,36 +319,14 @@ void replace_macro_tokens(char*statusbarformat,char*cur_stb_text) {
 
 
 void update_gui_zorder() {
-    int numdone = 0, b;
-
-    // for each GUI
-    for (int a = 0; a < game.numgui; a++) {
-        // find the right place in the draw order array
-        int insertAt = numdone;
-        for (b = 0; b < numdone; b++) {
-            if (guis[a].zorder < guis[play.gui_draw_order[b]].zorder) {
-                insertAt = b;
-                break;
-            }
-        }
-        // insert the new item
-        for (b = numdone - 1; b >= insertAt; b--)
-            play.gui_draw_order[b + 1] = play.gui_draw_order[b];
-        play.gui_draw_order[insertAt] = a;
-        numdone++;
-    }
+    
 
 }
 
 
 void export_gui_controls(int ee) {
 
-    for (int ff = 0; ff < guis[ee].numobjs; ff++) {
-        if (guis[ee].objs[ff]->scriptName[0] != 0)
-            ccAddExternalSymbol(guis[ee].objs[ff]->scriptName, guis[ee].objs[ff]);
-
-        ccRegisterManagedObject(guis[ee].objs[ff], &ccDynamicGUIObject);
-    }
+    
 }
 
 void unexport_gui_controls(int ee) {
