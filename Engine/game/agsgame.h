@@ -49,6 +49,7 @@ namespace Game
 {
 
 // Forward declarations
+class CDynamicObjectManager;
 class CRoom;
 class CCharacter;
 class CDialogTopic;
@@ -139,6 +140,8 @@ public:
     HErr    Initialize();
     void    Shutdown();
 
+    CDynamicObjectManager *GetObjectManager() const;
+
     void    SetGlobalMessage(int32_t id, const CString &message);
     CString GetGlobalMessage(int32_t id);
 
@@ -179,6 +182,8 @@ protected:
     void    RegisterScriptRoomObjects();
 
 private:
+
+    CDynamicObjectManager       &_objectManager;
 
     // Unfortunately it won't be that easy to get rid of those structs;
     // They are referenced from script directly by address, and Editor

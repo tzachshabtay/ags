@@ -2,6 +2,7 @@
 #include "util/wgt2allg.h"
 #include "Engine/game/agsgame.h"
 #include "Engine/game/_view.h"
+#include "Engine/game/dynamicobjectmanager.h"
 
 namespace AGS
 {
@@ -21,6 +22,35 @@ CView::CView()
 CView::~CView()
 {
 
+}
+
+CString CView::GetType() const
+{
+    return "View";
+}
+
+CString CView::GetScriptName() const
+{
+    return "";
+}
+
+void *CView::GetScriptData() const
+{
+    return (void*)&_viewStruct;
+}
+
+void CView::Dispose()
+{
+
+}
+
+void CView::Serialize(CStream *out) const
+{
+}
+
+HErr CView::Unserialize(CStream *in)
+{
+    return Err::Nil();
 }
 
 /*const*/ ViewStruct &CView::GetViewStruct() /*const*/

@@ -1177,6 +1177,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Engine\game\dynamicobjectmanager.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Engine\game\lipsync.cpp"
 					>
 				</File>
@@ -1184,6 +1188,10 @@
 			<Filter
 				Name="util"
 				>
+				<File
+					RelativePath="..\..\Engine\util\_managedobjectpool.cpp"
+					>
+				</File>
 				<File
 					RelativePath="..\..\Engine\util\cmdargs.cpp"
 					>
@@ -2095,6 +2103,10 @@
 				Name="util"
 				>
 				<File
+					RelativePath="..\..\Engine\util\_managedobjectpool.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Engine\util\cmdargs.h"
 					>
 				</File>
@@ -2123,11 +2135,27 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Engine\game\agsdynamicobject.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Engine\game\agsgame.h"
 					>
 				</File>
 				<File
 					RelativePath="..\..\Engine\game\assets_manager.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\game\dynamicobject.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\game\dynamicobjectmanager.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Engine\game\managedlistener.h"
 					>
 				</File>
 			</Filter>

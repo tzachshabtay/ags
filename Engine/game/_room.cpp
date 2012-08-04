@@ -1,6 +1,7 @@
 
 #include "util/wgt2allg.h"
 #include "Engine/game/_room.h"
+#include "Engine/game/dynamicobjectmanager.h"
 
 namespace AGS
 {
@@ -20,6 +21,36 @@ CRoom::CRoom()
 CRoom::~CRoom()
 {
 
+}
+
+CString CRoom::GetType() const
+{
+    return "Room";
+}
+
+CString CRoom::GetScriptName() const
+{
+    return "";
+}
+
+void *CRoom::GetScriptData() const
+{
+    return (void*)this;
+}
+
+void CRoom::Dispose()
+{
+
+}
+
+void CRoom::Serialize(CStream *out) const
+{
+
+}
+
+HErr CRoom::Unserialize(CStream *in)
+{
+    return Err::Nil();
 }
 
 /*const*/ roomstruct &CRoom::GetStatic() /*const*/

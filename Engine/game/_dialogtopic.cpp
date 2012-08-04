@@ -1,5 +1,6 @@
 
 #include "Engine/game/_dialogtopic.h"
+#include "Engine/game/dynamicobjectmanager.h"
 
 namespace AGS
 {
@@ -17,6 +18,36 @@ CDialogTopic::CDialogTopic()
 CDialogTopic::~CDialogTopic()
 {
 
+}
+
+CString CDialogTopic::GetType() const
+{
+    return "DialogTopic";
+}
+
+CString CDialogTopic::GetScriptName() const
+{
+    return "";
+}
+
+void *CDialogTopic::GetScriptData() const
+{
+    return (void*)&_dialogTopic;
+}
+
+void CDialogTopic::Dispose()
+{
+
+}
+
+void CDialogTopic::Serialize(CStream *out) const
+{
+
+}
+
+HErr CDialogTopic::Unserialize(CStream *in)
+{
+    return Err::Nil();
 }
 
 /*const*/ DialogTopic &CDialogTopic::GetDialogTopic() /*const*/

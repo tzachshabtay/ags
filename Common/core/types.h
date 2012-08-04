@@ -44,4 +44,7 @@ namespace AGS
 } // namespace AGS
 #endif // WINDOWS_VERSION
 
+// FIXME (make from intptr_t)
+typedef long refHandle;
+
 #endif // __AGS_CN_CORE__TYPES_H

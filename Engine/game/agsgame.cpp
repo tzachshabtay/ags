@@ -9,6 +9,7 @@
 #include "Engine/game/assets_manager.h"
 #include "Engine/game/_character.h"
 #include "Engine/game/_dialogtopic.h"
+#include "Engine/game/dynamicobjectmanager.h"
 #include "Engine/game/_room.h"
 #include "Engine/game/_view.h"
 #include "Engine/platform/base/agsplatformdriver.h"
@@ -40,7 +41,8 @@ namespace StreamSeek = AGS::Common::Util;
 /* static */ const GameDataVersion CAGSGame::LatestGameDataVersion = kGameData_321;
 
 CAGSGame::CAGSGame()
-    : _guiManager(*new CGUIManager())
+    : _objectManager(*new CDynamicObjectManager())
+    , _guiManager(*new CGUIManager())
 {
 }
 
@@ -125,6 +127,11 @@ HErr CAGSGame::Initialize()
 void CAGSGame::Shutdown()
 {
 
+}
+
+CDynamicObjectManager *CAGSGame::GetObjectManager() const
+{
+    return &_objectManager;
 }
 
 void CAGSGame::SetGlobalMessage(int32_t id, const CString &message)
