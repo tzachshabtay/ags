@@ -207,6 +207,7 @@ namespace AGS.Types
 
         [Description("The number of hotspots in the room")]
         [Category("Regions")]
+        [Browsable(false)]
         public int HotspotCount
         {
             get { return _hotspots.Count; }
@@ -215,6 +216,7 @@ namespace AGS.Types
 
         [Description("The number of walkable areas in the room")]
         [Category("Regions")]
+        [Browsable(false)]
         public int WalkableAreaCount
         {
             get { return _walkableAreas.Count; }
@@ -223,6 +225,7 @@ namespace AGS.Types
 
         [Description("The number of walk-behinds in the room")]
         [Category("Regions")]
+        [Browsable(false)]
         public int WalkBehindCount
         {
             get { return _walkBehinds.Count; }
@@ -231,6 +234,7 @@ namespace AGS.Types
 
         [Description("The number of regions in the room")]
         [Category("Regions")]
+        [Browsable(false)]
         public int RegionCount
         {
             get { return _regions.Count; }
